@@ -3,7 +3,7 @@
 library(tidyverse)
 library(ggforce)
 
-CNdata <- read.csv("Data/Elements/PlantSoil_CN.csv")
+CNdata <- read.csv("Data/Elements/CN_Tidy.csv")
 
 ## FIELD-LEVEL (2021) ----
 

@@ -158,30 +158,33 @@ prep_data_2021 <- read.csv("Data/SIR/2021_SIR/SIR Prep_2021.csv") %>%
   select(Sample_ID, unique.id)
 
 c_2021 <- left_join(sir_data_2021, prep_data_2021, by = "unique.id") %>%
-  mutate(Year = 2021)
+  mutate(Year = 2021) %>% 
+  drop_na()
+  
 
 # Combine with additional data for 2023
 prep_data_2023 <- read.csv("Data/SIR/2023_SIR/SIR Prep_2023.csv") %>%
   select(Sample_ID, unique.id)
 
 c_2023 <- left_join(sir_data_2023, prep_data_2023, by = "unique.id") %>%
-  mutate(Year = 2023)
+  mutate(Year = 2023) %>% 
+  drop_na()
 
 # Calculate the average CO2CperHourperg for each Sample_ID within each year
-avg_2021 <- c_2021 %>%
+SIR_avg_2021 <- c_2021 %>%
   group_by(Sample_ID, Year) %>%
   summarize(CO2CperHourperg = mean(CO2CperHourperg, na.rm = TRUE))
 
-avg_2023 <- c_2023 %>%
+SIR_avg_2023 <- c_2023 %>%
   group_by(Sample_ID, Year) %>%
   summarize(CO2CperHourperg = mean(CO2CperHourperg, na.rm = TRUE))
 
 # Combine the 2021 and 2023 data frames by Sample_ID and Year
-final_data <- bind_rows(avg_2021, avg_2023) %>%
+SIR_final_data <- bind_rows(SIR_avg_2021, SIR_avg_2023) %>%
   filter(!is.na(Sample_ID))
 
 # Apply additional transformations
-final_data <- final_data %>%
+SIR_final_data <- SIR_final_data %>%
   mutate(Site = case_when(
     startsWith(as.character(Sample_ID), "FNH") ~ "FN",
     startsWith(as.character(Sample_ID), "FNS") ~ "YF",
@@ -205,18 +208,4 @@ final_data <- final_data %>%
     substr(Sample_ID, 5, 5) == "H" ~ "Herbivore",
     substr(Sample_ID, 5, 5) == "P" ~ "Predator"
   )) %>%
-  mutate(Transplant_Treatment = case_when(
-    substr(Sample_ID, 3, 3) == "H" ~ "Home",
-    substr(Sample_ID, 3, 3) == "N" ~ "North",
-    substr(Sample_ID, 3, 3) == "S" ~ "South"
-  )) %>%
   mutate(Population = substr(Sample_ID, 1, 2))
-
-# Calculate the difference in CO2CperHourperg between 2023 and 2021
-diff_data <- final_data %>%
-  spread(key = Year, value = CO2CperHourperg) %>%
-  mutate(SIR_Difference = `2023` - `2021`) %>%
-  select(Sample_ID,
-         Site, Trophic_Treatment, Transplant_Treatment, Population,
-         SIR_Difference) %>%
-  filter(!is.na(SIR_Difference))

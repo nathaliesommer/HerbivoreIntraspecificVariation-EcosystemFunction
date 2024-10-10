@@ -35,18 +35,18 @@ cage_diversity <- diversitycomb %>%
   filter(!(Population %in% c("HF", "SP"))) %>% # remove extraneous sites
   select(-BARE) %>% # remove bare ground
   rowwise() %>%
-  mutate(Cover_Sum = sum(c_across(-c(Cage.ID, Jumping, Year, Population, Transplant, Treatment, Site, Replicate)))) %>% # sum plant cover 
+  mutate(Cover_Sum = sum(c_across(-c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate)))) %>% # sum plant cover 
   ungroup()
 
 cage_diversity <- cage_diversity %>% # normalize cover to 100%
   mutate(across(
-    .cols = -c(Cage.ID, Jumping, Year, Population, Transplant, Treatment, Site, Replicate, Cover_Sum),
+    .cols = -c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate, Cover_Sum),
     .fns = ~ round((.x / Cover_Sum) * 100)
   ))
 
 cage_diversity_long <- cage_diversity %>%
   pivot_longer(
-    cols = -c(Cage.ID, Jumping, Year, Population, Transplant, Treatment, Site, Replicate, Cover_Sum),
+    cols = -c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate, Cover_Sum),
     names_to = "Species_ID",
     values_to = "Cover"
   ) %>% 
@@ -60,48 +60,8 @@ functional_groups <- cage_diversity_long %>%
     MISC = sum(Cover[!(Species_ID %in% c("SORU2", "SOCA6", "POPRC"))], na.rm = TRUE)
   ) %>%
   pivot_longer(cols = SORU:MISC, names_to = "Species_ID", values_to = "Cover") %>%
-  ungroup()
-
-functional_change <- functional_groups %>%
-  pivot_wider(names_from = Year, values_from = Cover) %>%
-  mutate(Change_in_Cover = `2021` - `2023`) %>%
-  select(Cage.ID, Species_ID, Population, Treatment, Transplant, Site, Replicate, Change_in_Cover) 
-
-## Data Viz ----
-
-functional_change %>%
-  filter(Species_ID == "SORU") %>% 
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>% 
-  ggplot(aes(x = Treatment, y = Change_in_Cover)) +
-  geom_boxplot() +
-  labs(title = "SORU Change in %Cover Across Sites",
-       x = "Treatment",
-       y = "Soru % Cover Change") +
-  theme_classic() + 
-  coord_flip() +
-
-functional_change %>%
-  filter(Species_ID == "POPRC") %>% 
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>% 
-  ggplot(aes(x = Treatment, y = Change_in_Cover)) +
-  geom_boxplot() +
-  labs(title = "POPRC Change in %Cover Across Sites",
-       x = "Treatment",
-       y = "Soru % Cover Change") +
-  theme_classic() + 
-  coord_flip()
-
-functional_change %>%
-  filter(Species_ID == "MISC") %>% 
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>% 
-  ggplot(aes(x = Treatment, y = Change_in_Cover)) +
-  geom_boxplot() +
-  labs(title = "MISC Change in %Cover Across Sites",
-       x = "Treatment",
-       y = "Soru % Cover Change") +
-  theme_classic() + 
-  coord_flip()
-
+  ungroup() %>% 
+  drop_na()
 
 
 ## Allometry ----
@@ -195,17 +155,46 @@ functional_groups_wide <- functional_groups_wide %>%
   ) %>%
   ungroup()
 
-biomass_differences <- functional_groups_wide %>%
-  select(Cage.ID, Population, Treatment, Transplant, Site, Replicate, Year, SORU_Biomass, POPRC_Biomass, MISC_Biomass) %>% 
-  pivot_wider(names_from = Year, values_from = c(SORU_Biomass, POPRC_Biomass, MISC_Biomass)) %>%
-  mutate(
-    SORU_Biomass_Diff = SORU_Biomass_2021 - SORU_Biomass_2023,
-    POPRC_Biomass_Diff = POPRC_Biomass_2021 - POPRC_Biomass_2023,
-    MISC_Biomass_Diff = MISC_Biomass_2021 - MISC_Biomass_2023
-  ) %>%
-  select(Cage.ID, Population, Treatment, Transplant, Site, Replicate, SORU_Biomass_Diff, POPRC_Biomass_Diff, MISC_Biomass_Diff)
+### Diversity Index Calculation ----
 
-### Data Viz ----
+# Function to calculate Shannon-Weiner diversity index
+calculate_shannon_weiner <- function(abundances) {
+  proportions <- abundances / sum(abundances)
+  proportions <- proportions[proportions > 0]  # Remove zero proportions
+  -sum(proportions * log(proportions))
+}
+
+# Function to calculate diversity indices
+calculate_diversity_indices <- function(data) {
+  data %>%
+    rowwise() %>%
+    mutate(
+      PlantRichness = sum(c_across(-c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate)) > 0),
+      PlantDiversity = calculate_shannon_weiner(c_across(-c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate)))
+    ) %>%
+    ungroup() %>%
+    select(Cage.ID, PlantRichness, PlantDiversity)
+}
+
+# Load your data
+veg_2021 <- read.csv("Data/VegCommunity/Vegetation.cover.2021.csv")
+veg_2023 <- read.csv("Data/VegCommunity/Vegetation.cover.2023.csv")
+
+# Calculate diversity indices for each dataset
+diversity_2021 <- calculate_diversity_indices(veg_2021) %>% 
+  drop_na() # removes cages from data set not relevant to this study
+diversity_2023 <- calculate_diversity_indices(veg_2023) %>% 
+  drop_na() # removes cages from data set not relevant to this study
+
+# Combine results and transform to long format
+combined_diversity_long <- full_join(diversity_2021, diversity_2023, by = "Cage.ID", suffix = c("_2021", "_2023")) %>%
+  pivot_longer(
+    cols = starts_with("Plant"),
+    names_to = c(".value", "Year"),
+    names_sep = "_"
+  ) 
+
+### Exploratory Data Viz ----
 biomass_differences %>%
   mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>%
   ggplot(aes(x = Transplant, y = SORU_Biomass_Diff, fill = Treatment)) +
