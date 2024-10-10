@@ -1,0 +1,222 @@
+#### SIR calculation 
+## Code by A. Polussa, A.M. Dobson, N.R. Sommer
+# UPDATED Sep 17 2024
+
+library(tidyverse)
+
+# Function to calculate mean standard values
+calculate_mean_standard <- function(stds) {
+  stds %>% 
+    rowwise() %>%
+    mutate(meanStandard = mean(
+      c_across(starts_with("std.value")), na.rm = TRUE
+    )) %>%
+    ungroup()
+}
+
+# Function to interpolate corrected standards
+interpolate_corrected_standards <- function(stds, sir) {
+  corr_std <- numeric()
+  the.time <- numeric()
+  the.slope <- numeric()
+  v.num <- 1
+
+  for (j in 2:nrow(stds)) {
+    for (i in 1:(stds$irga.id[j] - stds$irga.id[j-1])) {
+      time_diff_stds <- as.numeric(
+        difftime(
+          as.POSIXct(stds$std.start.time[j], format = "%m/%d/%Y %H:%M"),
+          as.POSIXct(stds$std.start.time[j-1], format = "%m/%d/%Y %H:%M"), 
+          units = "min"
+        )
+      )
+      time_diff_sample <- as.numeric(
+        difftime(
+          as.POSIXct(sir$time.irga[stds$irga.id[j-1] + i - 1], 
+                     format = "%m/%d/%Y %H:%M"),
+          as.POSIXct(sir$time.irga[stds$irga.id[j-1]], 
+                     format = "%m/%d/%Y %H:%M"), 
+          units = "min"
+        )
+      )
+
+      corr_std[v.num] <- as.numeric(stds$meanStandard[j-1]) +  
+        ((as.numeric(stds$meanStandard[j]) - 
+          as.numeric(stds$meanStandard[j-1])) / time_diff_stds) * 
+        time_diff_sample
+
+      the.time[v.num] <- as.numeric(
+        difftime(
+          as.POSIXct(sir$time.irga[stds$irga.id[j-1] + i - 1], format = "%m/%d/%Y %H:%M"),
+          as.POSIXct(stds$std.end.time[j-1], format = "%m/%d/%Y %H:%M"),
+          units = "min"
+        )
+      )
+
+      the.slope[v.num] <- (
+        (as.numeric(stds$meanStandard[j]) - as.numeric(stds$meanStandard[j-1])) / 
+        time_diff_stds
+      )
+      v.num <- v.num + 1
+    }
+  }
+
+  list(corr_std = corr_std, the.time = the.time, the.slope = the.slope)
+}
+
+# Function to calculate SIR
+calculate_sir <- function(sir, gwc) {
+  stds <- sir %>% filter(!is.na(std.value.1)) %>% calculate_mean_standard()
+  interpolated <- interpolate_corrected_standards(stds, sir)
+
+  sir <- sir[1:(nrow(sir) - 1),] # remove last row
+
+  sir <- sir %>%
+    mutate(
+      correctedStandard = as.numeric(interpolated$corr_std),
+      the.time = interpolated$the.time,
+      the.slope = interpolated$the.slope
+    ) %>%
+    select(-starts_with("std.value"), -std.start.time, -std.end.time)
+
+  sir_calc <- sir %>%
+    mutate(
+      incubationTime = as.numeric(
+        difftime(
+          as.POSIXct(time.irga, format = "%m/%d/%Y %H:%M"),
+          as.POSIXct(time.flush, format = "%m/%d/%Y %H:%M"), 
+          units = "hours"
+        )
+      ),
+      dilutionFactor = ((5 * times.sampled) / (57.15 - soil.volume)) + 1,
+      measuredCO2 = irga.integral * (standard.co2 / correctedStandard),
+      concentrationCO2 = measuredCO2 * dilutionFactor,
+      volumeCO2 = concentrationCO2 * ((57.15 - soil.volume) / 1000),
+      molesCO2 = (volumeCO2 / 22.414) * 273.15 / 293.15,
+      CO2C = molesCO2 * 12.011,
+      CO2CperHour = CO2C / incubationTime
+    ) %>%
+    select(
+      irga.id, unique.id, replicate, soil.volume, actual.fresh.mass, 
+      standard.co2, correctedStandard, the.time, the.slope, irga.integral, 
+      incubationTime, CO2C, CO2CperHour
+    )
+
+  sir_calc_normalized <- sir_calc %>%
+    left_join(gwc, by = "unique.id") %>%
+    mutate(
+      DryMass = actual.fresh.mass * (1 - moistureFraction),
+      CO2CperHourperg = CO2CperHour / DryMass
+    ) %>%
+    select(unique.id, replicate, CO2CperHourperg)
+
+  sir_calc_normalized %>%
+    group_by(unique.id) %>%
+    summarize(CO2CperHourperg = mean(CO2CperHourperg, na.rm = TRUE))
+}
+
+# Main script
+sir_files_2021 <- c(
+  "Data/SIR/2021_SIR/soil_sir_11.21.csv", 
+  "Data/SIR/2021_SIR/soil_sir_11.27.csv", 
+  "Data/SIR/2021_SIR/soil_sir_11.28.csv", 
+  "Data/SIR/2021_SIR/soil_sir_11.29.csv", 
+  "Data/SIR/2021_SIR/soil_sir_12.27.csv", 
+  "Data/SIR/2021_SIR/soil_sir_12.29.csv", 
+  "Data/SIR/2021_SIR/soil_sir_1.1.csv"
+)
+sir_files_2023 <- c(
+  "Data/SIR/2023_SIR/soil_sir_11.08.csv", 
+  "Data/SIR/2023_SIR/soil_sir_11.14.csv", 
+  "Data/SIR/2023_SIR/soil_sir_11.17.csv", 
+  "Data/SIR/2023_SIR/soil_sir_11.19.csv"
+)
+gwc_file_2021 <- "Data/SIR/2021_SIR/soilGWC_2021.csv"
+gwc_file_2023 <- "Data/SIR/2023_SIR/soilGWC_2023.csv"
+
+process_sir_data <- function(sir_files, gwc_file) {
+  all_sir_data <- list()
+  
+  for (sir_file in sir_files) {
+    sir <- read_csv(sir_file)
+    gwc <- read_csv(gwc_file)
+    sir_data <- calculate_sir(sir, gwc)
+    all_sir_data <- bind_rows(all_sir_data, sir_data)
+  }
+  
+  all_sir_data
+}
+
+# Process 2021 data
+sir_data_2021 <- process_sir_data(sir_files_2021, gwc_file_2021)
+
+# Process 2023 data
+sir_data_2023 <- process_sir_data(sir_files_2023, gwc_file_2023)
+
+# Combine with additional data for 2021
+prep_data_2021 <- read.csv("Data/SIR/2021_SIR/SIR Prep_2021.csv") %>%
+  select(Sample_ID, unique.id)
+
+c_2021 <- left_join(sir_data_2021, prep_data_2021, by = "unique.id") %>%
+  mutate(Year = 2021)
+
+# Combine with additional data for 2023
+prep_data_2023 <- read.csv("Data/SIR/2023_SIR/SIR Prep_2023.csv") %>%
+  select(Sample_ID, unique.id)
+
+c_2023 <- left_join(sir_data_2023, prep_data_2023, by = "unique.id") %>%
+  mutate(Year = 2023)
+
+# Calculate the average CO2CperHourperg for each Sample_ID within each year
+avg_2021 <- c_2021 %>%
+  group_by(Sample_ID, Year) %>%
+  summarize(CO2CperHourperg = mean(CO2CperHourperg, na.rm = TRUE))
+
+avg_2023 <- c_2023 %>%
+  group_by(Sample_ID, Year) %>%
+  summarize(CO2CperHourperg = mean(CO2CperHourperg, na.rm = TRUE))
+
+# Combine the 2021 and 2023 data frames by Sample_ID and Year
+final_data <- bind_rows(avg_2021, avg_2023) %>%
+  filter(!is.na(Sample_ID))
+
+# Apply additional transformations
+final_data <- final_data %>%
+  mutate(Site = case_when(
+    startsWith(as.character(Sample_ID), "FNH") ~ "FN",
+    startsWith(as.character(Sample_ID), "FNS") ~ "YF",
+    startsWith(as.character(Sample_ID), "FNN") ~ "UP",
+    startsWith(as.character(Sample_ID), "MCH") ~ "MC",
+    startsWith(as.character(Sample_ID), "MCN") ~ "UP",
+    startsWith(as.character(Sample_ID), "MCS") ~ "YF",
+    startsWith(as.character(Sample_ID), "YFH") ~ "YF",
+    startsWith(as.character(Sample_ID), "YFN") ~ "UP",
+    startsWith(as.character(Sample_ID), "SCN") ~ "UP",
+    startsWith(as.character(Sample_ID), "SCH") ~ "SC",
+    startsWith(as.character(Sample_ID), "SCS") ~ "YF",
+    startsWith(as.character(Sample_ID), "UPH") ~ "UP",
+    startsWith(as.character(Sample_ID), "UPS") ~ "YF",
+    startsWith(as.character(Sample_ID), "DCH") ~ "DC",
+    startsWith(as.character(Sample_ID), "DCN") ~ "UP",
+    startsWith(as.character(Sample_ID), "DCS") ~ "YF"
+  )) %>%
+  mutate(Trophic_Treatment = case_when(
+    substr(Sample_ID, 5, 5) == "V" ~ "Vegetation",
+    substr(Sample_ID, 5, 5) == "H" ~ "Herbivore",
+    substr(Sample_ID, 5, 5) == "P" ~ "Predator"
+  )) %>%
+  mutate(Transplant_Treatment = case_when(
+    substr(Sample_ID, 3, 3) == "H" ~ "Home",
+    substr(Sample_ID, 3, 3) == "N" ~ "North",
+    substr(Sample_ID, 3, 3) == "S" ~ "South"
+  )) %>%
+  mutate(Population = substr(Sample_ID, 1, 2))
+
+# Calculate the difference in CO2CperHourperg between 2023 and 2021
+diff_data <- final_data %>%
+  spread(key = Year, value = CO2CperHourperg) %>%
+  mutate(SIR_Difference = `2023` - `2021`) %>%
+  select(Sample_ID,
+         Site, Trophic_Treatment, Transplant_Treatment, Population,
+         SIR_Difference) %>%
+  filter(!is.na(SIR_Difference))
