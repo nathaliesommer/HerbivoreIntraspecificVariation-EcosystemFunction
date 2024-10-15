@@ -144,33 +144,22 @@ litter_calc_2023 <- decomp_2023 %>%
   mutate(DecompRate = (MassLoss / abs(SetTime)) * 30) %>%
   mutate(Year = year(mdy(Collection_Date)))
 
-# Apply scaling factors to 2021 and 2023 data
-decomp_2021_scaled <- litter_calc_2021 %>%
-  left_join(scaling_factors, by = "Site") %>%
-  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
-  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
-
-decomp_2023_scaled <- litter_calc_2023 %>%
-  left_join(scaling_factors, by = "Site") %>%
-  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
-  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
-
 # Average replicates within each year 
-decomp_2021_avg <- decomp_2021_scaled %>%
+decomp_2021_avg <- litter_calc_2021 %>%
   group_by(Site, CageID, Population, Trophic_Treatment) %>%
-  summarise(Scaled_MassLoss_2021 = mean(Scaled_MassLoss, na.rm = TRUE), .groups = 'drop')
+  summarise(Unscaled_MassLoss_2021 = mean(MassLoss, na.rm = TRUE), .groups = 'drop')
 
-decomp_2023_avg <- decomp_2023_scaled %>%
+decomp_2023_avg <- decomp_2023 %>%
   group_by(Site, CageID, Population, Trophic_Treatment) %>%
-  summarise(Scaled_MassLoss_2023 = mean(Scaled_MassLoss, na.rm = TRUE), .groups = 'drop')
+  summarise(Unscaled_MassLoss_2023 = mean(MassLoss, na.rm = TRUE), .groups = 'drop')
 
 # Rename columns before combining
 decomp_2021_avg <- decomp_2021_avg %>%
-  rename(Scaled_MassLoss = Scaled_MassLoss_2021) %>%
+  rename(MassLoss = Unscaled_MassLoss_2021) %>%
   mutate(Year = 2021)
 
 decomp_2023_avg <- decomp_2023_avg %>%
-  rename(Scaled_MassLoss = Scaled_MassLoss_2023) %>%
+  rename(MassLoss = Unscaled_MassLoss_2023) %>%
   mutate(Year = 2023)
 
 # Combine the datasets
@@ -185,7 +174,7 @@ combined_scaled_data <- decomp_2021_avg %>%
   filter(!is.na(Scaled_Difference) & !is.nan(Scaled_Difference))
 
 
-# Plotting the change in decomposition rate across transplant treatments
+# Change in decomposition rate across transplant treatments
 ggplot(combined_scaled_data, aes(x = Population, y = Scaled_Difference, fill = Transplant_Treatment, color = Transplant_Treatment)) +
   geom_boxplot(alpha = 0.3, position = position_dodge(width = 0.75), outlier.shape = NA) +
   geom_jitter(position = position_dodge(width = 0.75), size = 1.1) +
@@ -196,7 +185,7 @@ ggplot(combined_scaled_data, aes(x = Population, y = Scaled_Difference, fill = T
   labs(x = "Population", y = "Difference in Mass Loss Rate (g/month)") +
   ggtitle("Scaled Difference in Decomposition Rate (Treatment - Baseline)")
   
-# Plotting the change in decomposition rate across trophic treatments
+# Change in decomposition rate across trophic treatments
 ggplot(combined_scaled_data, aes(x = Population, y = Scaled_Difference, fill = Trophic_Treatment, color = Trophic_Treatment)) +
   geom_boxplot(alpha = 0.3, position = position_dodge(width = 0.75), outlier.shape = NA) +
   geom_jitter(position = position_dodge(width = 0.75), size = 1.1) +
@@ -206,3 +195,42 @@ ggplot(combined_scaled_data, aes(x = Population, y = Scaled_Difference, fill = T
   coord_flip() +
   labs(x = "Population", y = "Difference in Mass Loss Rate (g/month)") +
   ggtitle("Scaled Difference in Decomposition Rate (Treatment - Baseline)")
+
+# Standard VS Local Litter plot
+standard_data <- field_litter %>%
+  filter(Bag_Type == "Standard") %>%
+  select(Site, Pair_Number, DecompRate_Standard = DecompRate)
+
+litter_data <- field_litter %>%
+  filter(Bag_Type == "Litter") %>%
+  select(Site, Pair_Number, DecompRate_Litter = DecompRate)
+
+# Join the datasets on Site and Pair_Number
+reshaped_data <- standard_data %>%
+  inner_join(litter_data, by = c("Site", "Pair_Number"))
+
+
+ggplot(reshaped_data, aes(x = DecompRate_Standard, y = DecompRate_Litter, color = Site)) +
+  geom_point(alpha = 0.6) +  # Plot all points
+  geom_smooth(method = "lm", se = FALSE, aes(group = Site), linetype = "solid", size = 1) +  # Mean regression line for each site
+  labs(title = "Comparison of Mass Loss: Standard vs. Litter",
+       x = "Decomposition Rate (Standard)",
+       y = "Decomposition Rate (Litter)",
+       color = "Site") +
+  theme_minimal() + 
+  facet_wrap(~Site)
+
+# Litter scaling does not look promising
+
+### NOT NEEDED -----
+# Apply scaling factors to 2021 and 2023 data
+decomp_2021_scaled <- litter_calc_2021 %>%
+  left_join(scaling_factors, by = "Site") %>%
+  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
+  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
+
+decomp_2023_scaled <- litter_calc_2023 %>%
+  left_join(scaling_factors, by = "Site") %>%
+  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
+  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
+
