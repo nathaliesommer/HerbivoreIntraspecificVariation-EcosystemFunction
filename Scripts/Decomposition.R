@@ -165,7 +165,7 @@ decomp_2023_avg <- decomp_2023_avg %>%
 # Combine the datasets
 combined_decomp <- bind_rows(decomp_2021_avg, decomp_2023_avg)
 
-### Exploratory data viz
+### Exploratory data viz ----
 
 # Combine the 2021 and 2023 scaled data
 combined_scaled_data <- decomp_2021_avg %>%

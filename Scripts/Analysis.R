@@ -5,7 +5,6 @@
 # N-min.R: N_min_full_data
 # Veg.R: functional_groups_wide, combined_diversity_long
 # SoilPlantCN.R: CNdata
-# Decomposition.R: combined_decomp
 
 
 # Load necessary libraries
@@ -456,12 +455,78 @@ plot(POPRC_biomass_model)
 simulation_output <- simulateResiduals(fittedModel = POPRC_biomass_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_POPRC_Biomass ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
+
+
+
+# Diagnostics look great; still use non-parametric bootstrapping to generate confidence intervals for the fixed effects 
+
+summary(POPRC_biomass_model)
+
+##### Fixed effects and confidence intervals together ----
+boot_model <- bootMer(POPRC_biomass_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(POPRC_biomass_model))
+fixed_effects <- fixef(POPRC_biomass_model)
+POPRCbiomass_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(POPRCbiomass_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+# Extract the variance components of the random effects
+random_effects_variance <- as.data.frame(VarCorr(POPRC_biomass_model))
+
+# Extract the variance for the random effects and residuals
+site_variance <- random_effects_variance$vcov[1]  
+residual_variance <- attr(VarCorr(POPRC_biomass_model), "sc")^2
+
+# Calculate total variance
+total_variance <- site_variance + residual_variance
+
+# Calculate the proportion of variance explained by the random effect (Site)
+random_effect_variance_proportion <- site_variance / total_variance
+
+# Calculate the proportion of variance explained by the residuals
+residual_variance_proportion <- residual_variance / total_variance
+
+# Print results
+cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
+cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
+
+# Calculate the marginal and conditional R² values
+r_squared <- r.squaredGLMM(POPRC_biomass_model)
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+
+
+
+
+
+
+
+
+
+
 
 
 #### N-min rate ----
@@ -481,7 +546,74 @@ fixed_model <- lm(Diff_Overall_mineralization_rate ~ Treatment + Population_Orig
 vif_values <- vif(fixed_model)
 print(vif_values)
 
-#### Soil %C ----
+
+
+# Diagnostics look good, but we will still use non-parametric bootstrapping 
+
+summary(Nmin_model)
+
+##### Fixed effects and confidence intervals together ----
+boot_model <- bootMer(Nmin_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(Nmin_model))
+fixed_effects <- fixef(Nmin_model)
+Nmin_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(Nmin_effect_summary) # interpret
+# two significant parameters, but the effect size is negligible
+
+##### Variance partitioning ----
+
+# Extract the variance components of the random effects
+random_effects_variance <- as.data.frame(VarCorr(Nmin_model))
+
+# Extract the variance for the random effects and residuals
+site_variance <- random_effects_variance$vcov[1]  
+residual_variance <- attr(VarCorr(Nmin_model), "sc")^2
+
+# Calculate total variance
+total_variance <- site_variance + residual_variance
+
+# Calculate the proportion of variance explained by the random effect (Site)
+random_effect_variance_proportion <- site_variance / total_variance
+
+# Calculate the proportion of variance explained by the residuals
+residual_variance_proportion <- residual_variance / total_variance
+
+# Print results
+cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
+cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
+
+# Calculate the marginal and conditional R² values
+r_squared <- r.squaredGLMM(Nmin_model)
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+
+
+
+
+
+
+
+
+
+
+
+#### TO DO: Soil %C ----
 SoilC_model <- lmer(Diff_PercentC_SOIL ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
 plot(SoilC_model)
 
@@ -490,14 +622,22 @@ hist(final_data_diff$Diff_PercentC_SOIL)
 simulation_output <- simulateResiduals(fittedModel = SoilC_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) 
+testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PercentC_SOIL ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
-#### Soil %N ----
+
+
+
+
+
+
+
+
+#### TO DO: Soil %N ----
 hist(final_data_diff$Diff_PercentN_SOIL)
 SoilN_model <- lmer(Diff_PercentN_SOIL ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
 
@@ -506,14 +646,25 @@ plot(SoilN_model)
 simulation_output <- simulateResiduals(fittedModel = SoilN_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PercentN_SOIL ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
-#### Litter %N ----
+
+
+
+
+
+
+
+
+
+
+
+#### TO DO: Litter %N ----
 hist(final_data_diff$Diff_PercentN_LITTER)
 LitterN_model <- lmer(Diff_PercentN_LITTER ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
 
@@ -522,14 +673,19 @@ plot(LitterN_model)
 simulation_output <- simulateResiduals(fittedModel = LitterN_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PercentN_LITTER ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
-#### POPRC %N ----
+
+
+
+
+
+#### TO DO: POPRC %N ----
 
 hist(final_data_diff$Diff_PercentN_POPRC)
 POPRCN_model <- lmer(Diff_PercentN_POPRC ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
@@ -539,14 +695,19 @@ plot(POPRCN_model)
 simulation_output <- simulateResiduals(fittedModel = POPRCN_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PercentN_POPRC ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
-#### SORU %N ----
+
+
+
+
+
+#### TO DO: SORU %N ----
 hist(final_data_diff$Diff_PercentN_SORU)
 SORUN_model <- lmer(Diff_PercentN_SORU ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
 
@@ -555,7 +716,7 @@ plot(SORUN_model)
 simulation_output <- simulateResiduals(fittedModel = SORUN_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PercentN_SORU ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
@@ -563,21 +724,37 @@ vif_values <- vif(fixed_model)
 print(vif_values)
 
 
-#### PlantRichness ----
-hist(final_data_diff$PlantRichness)
-Richness_model <- lmer(Diff_PlantRichness ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+
+
+
+
+
+
+
+
+
+#### TO DO: PlantRichness ----
+hist(final_data_diff$Diff_PlantRichness)
+PlantRichness_model <- lmer(Diff_PlantRichness ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
 
 # 1. Diagnostics - DHARMa package
 plot(PlantRichness_model)
 simulation_output <- simulateResiduals(fittedModel = PlantRichness_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output) # zero-inflated, run through chatGPT
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PlantRichness ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
+
+
+
+
+
+
+
 
 #### PlantDiversity ----
 hist(final_data_diff$Diff_PlantDiversity)
@@ -588,10 +765,68 @@ plot(PlantDiversity_model)
 simulation_output <- simulateResiduals(fittedModel = PlantDiversity_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # not zero-inflated
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
 fixed_model <- lm(Diff_PlantDiversity ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
 vif_values <- vif(fixed_model)
 print(vif_values)
+
+# Diagnostics look good, but we will still use non-parametric bootstrapping 
+
+summary(PlantDiversity_model)
+
+##### Fixed effects and confidence intervals together ----
+boot_model <- bootMer(PlantDiversity_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(PlantDiversity_model))
+fixed_effects <- fixef(PlantDiversity_model)
+PlantDiversity_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(PlantDiversity_effect_summary) # interpret
+# two significant parameters, but the effect size is negligible
+
+##### Variance partitioning ----
+
+# Extract the variance components of the random effects
+random_effects_variance <- as.data.frame(VarCorr(PlantDiversity_model))
+
+# Extract the variance for the random effects and residuals
+site_variance <- random_effects_variance$vcov[1]  
+residual_variance <- attr(VarCorr(PlantDiversity_model), "sc")^2
+
+# Calculate total variance
+total_variance <- site_variance + residual_variance
+
+# Calculate the proportion of variance explained by the random effect (Site)
+random_effect_variance_proportion <- site_variance / total_variance
+
+# Calculate the proportion of variance explained by the residuals
+residual_variance_proportion <- residual_variance / total_variance
+
+# Print results
+cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
+cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
+
+# Calculate the marginal and conditional R² values
+r_squared <- r.squaredGLMM(Nmin_model)
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+
+
+
 

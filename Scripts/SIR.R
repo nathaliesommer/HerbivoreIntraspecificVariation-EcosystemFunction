@@ -209,3 +209,4 @@ SIR_final_data <- SIR_final_data %>%
     substr(Sample_ID, 5, 5) == "P" ~ "Predator"
   )) %>%
   mutate(Population = substr(Sample_ID, 1, 2))
+
