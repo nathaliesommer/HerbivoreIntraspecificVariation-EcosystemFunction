@@ -222,15 +222,4 @@ ggplot(reshaped_data, aes(x = DecompRate_Standard, y = DecompRate_Litter, color 
 
 # Litter scaling does not look promising
 
-### NOT NEEDED -----
-# Apply scaling factors to 2021 and 2023 data
-decomp_2021_scaled <- litter_calc_2021 %>%
-  left_join(scaling_factors, by = "Site") %>%
-  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
-  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
-
-decomp_2023_scaled <- litter_calc_2023 %>%
-  left_join(scaling_factors, by = "Site") %>%
-  mutate(Scaled_MassLoss = MassLoss * Scaling_Factor) %>%
-  select(Site, CageID, Population, Trophic_Treatment, Scaled_MassLoss)
 

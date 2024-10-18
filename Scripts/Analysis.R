@@ -13,143 +13,82 @@ library(tidyr)
 
 ### Join data frames ----
 
-
 # Prepare data from each script
-
-# Decomposition data
-combined_decomp <- combined_decomp %>%
+decomp_data <- combined_decomp %>%
   rename(Sample_ID = CageID) %>%
   dplyr::select(Sample_ID, Population, MassLoss, Year)
 
-# SIR data
 sir_data <- SIR_final_data %>%
-  dplyr::select(Sample_ID, Year, CO2CperHourperg)
+  mutate(Population = substr(Sample_ID, 1, 2)) %>%  # Add Population column
+  dplyr::select(Sample_ID, Year, Population, CO2CperHourperg)
 
-# N-mineralization data
 n_min_data <- N_min_full_data %>%
   rename(Sample_ID = Sample.ID) %>%
   dplyr::select(Sample_ID, Year, Population, Site, `Ammonium rate`, `Nitrate rate`, `Overall mineralization rate`)
 
-# Vegetation biomass data
 veg_biomass_data <- functional_groups_wide %>%
   rename(Sample_ID = Cage.ID) %>%
   dplyr::select(Sample_ID, Year, Population, Treatment, Transplant, Site, SORU_Biomass, POPRC_Biomass, MISC_Biomass)
 
-# Plant diversity data
 diversity_data <- combined_diversity_long %>%
   rename(Sample_ID = Cage.ID) %>%
-  dplyr::select(Sample_ID, Year, PlantRichness, PlantDiversity)
+  mutate(Population = substr(Sample_ID, 1, 2)) %>%  # Add Population column
+  dplyr::select(Sample_ID, Year, Population, PlantRichness, PlantDiversity)
 
-# Soil and plant CN data
 cn_data <- CNdata %>%
   rename(Sample_ID = CageID) %>%
   dplyr::select(Sample_ID, Year, Population, Site, PercentN, PercentC, SampleType) %>%
   pivot_wider(names_from = SampleType, values_from = c(PercentN, PercentC))
 
-# Combine all data frames with inline type conversion
-final_data <- combined_decomp %>%
-  mutate(Year = as.character(Year)) %>%
-  left_join(sir_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  left_join(n_min_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  left_join(veg_biomass_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  left_join(diversity_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  left_join(cn_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  # Select and rename the desired columns
-  dplyr::select(
-    Sample_ID,
-    Year,
-    Population = Population.x,  
-    Site = Site.x,
-    Treatment,
-    Transplant,
-    MassLoss,
-    CO2CperHourperg,
-    `Ammonium rate`,
-    `Nitrate rate`,
-    `Overall mineralization rate`,
-    PlantRichness,
-    PlantDiversity,
-    SORU_Biomass,
-    POPRC_Biomass,
-    MISC_Biomass,
-    PercentN_SOIL,
-    PercentN_LITTER,
-    PercentN_POPRC,
-    PercentN_MISC,
-    PercentN_SORU,
-    PercentC_SOIL,
-    PercentC_LITTER,
-    PercentC_POPRC,
-    PercentC_MISC,
-    PercentC_SORU
-  ) %>%
-  mutate(
-    Site_DailyMax = case_when(
-      Site %in% c("YF", "DC", "SC") ~ "High",
-      Site %in% c("UP", "FN") ~ "Low"
-    )) %>% 
-      mutate(Population_Origin = case_when(
-        Population %in% c("YF", "DC", "SC") ~ "High",
-        Population %in% c("UP", "FN") ~ "Low"
-      )) %>% 
-    mutate(Transplant_Temp = case_when(
-      Transplant == "Home" ~ "Home",
-      Transplant == "North" ~ "Low",
-      Transplant == "South" ~ "High"
-    ))
-
-
 # Define potential response variables
 response_vars <- c(
-  "MassLoss", # y
-  "CO2CperHourperg", # y
+  "MassLoss",
+  "CO2CperHourperg",
   "Ammonium rate",
   "Nitrate rate",
-  "Overall mineralization rate", # y
-  "SORU_Biomass", # y
-  "POPRC_Biomass", # y
+  "Overall mineralization rate",
+  "SORU_Biomass",
+  "POPRC_Biomass",
   "MISC_Biomass",
-  "PercentN_SOIL", # y
-  "PercentN_LITTER", # y
-  "PercentN_POPRC", # y
+  "PercentN_SOIL",
+  "PercentN_LITTER",
+  "PercentN_POPRC",
   "PercentN_MISC",
-  "PercentN_SORU", # y
-  "PercentC_SOIL", # y
+  "PercentN_SORU",
+  "PercentC_SOIL",
   "PercentC_LITTER",
   "PercentC_POPRC",
   "PercentC_MISC",
   "PercentC_SORU",
-  "PlantRichness", # TO DO
-  "PlantDiversity" # TO DO
+  "PlantRichness",
+  "PlantDiversity"
 )
 
-# Create a new data object that calculates the difference between 2021 and 2023 for each response variable
-final_data_diff <- final_data %>%
-  filter(Year %in% c(2021, 2023)) %>%
-  group_by(Sample_ID, Population, Site, Treatment, Transplant, Year) %>%
-  summarise(across(all_of(response_vars), mean, .names = "{col}"), .groups = "drop") %>%
-  pivot_wider(names_from = Year, values_from = all_of(response_vars), names_sep = "_") %>%
+# Combine all data frames
+combined_data <- decomp_data %>%
+  mutate(Year = as.character(Year)) %>%
+  left_join(sir_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(n_min_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(veg_biomass_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(diversity_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(cn_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
+  # Ensure Site column is present
+  mutate(Site = coalesce(Site.x, Site.y, Site)) %>%
+  # Remove duplicates
+  distinct(Sample_ID, Year, .keep_all = TRUE)
+
+# Select and mutate final data
+final_data <- combined_data %>%
+  dplyr::select(
+    Sample_ID,
+    Year,
+    Population,  
+    Site,
+    Treatment,
+    Transplant,
+    all_of(response_vars)
+  ) %>%
   mutate(
-    Diff_MassLoss = MassLoss_2023 - MassLoss_2021,
-    Diff_CO2CperHourperg = CO2CperHourperg_2023 - CO2CperHourperg_2021,
-    Diff_Ammonium_rate = `Ammonium rate_2023` - `Ammonium rate_2021`,
-    Diff_Nitrate_rate = `Nitrate rate_2023` - `Nitrate rate_2021`,
-    Diff_Overall_mineralization_rate = `Overall mineralization rate_2023` - `Overall mineralization rate_2021`,
-    Diff_SORU_Biomass = SORU_Biomass_2023 - SORU_Biomass_2021,
-    Diff_POPRC_Biomass = POPRC_Biomass_2023 - POPRC_Biomass_2021,
-    Diff_MISC_Biomass = MISC_Biomass_2023 - MISC_Biomass_2021,
-    Diff_PercentN_SOIL = PercentN_SOIL_2023 - PercentN_SOIL_2021,
-    Diff_PercentN_LITTER = PercentN_LITTER_2023 - PercentN_LITTER_2021,
-    Diff_PercentN_POPRC = PercentN_POPRC_2023 - PercentN_POPRC_2021,
-    Diff_PercentN_MISC = PercentN_MISC_2023 - PercentN_MISC_2021,
-    Diff_PercentN_SORU = PercentN_SORU_2023 - PercentN_SORU_2021,
-    Diff_PercentC_SOIL = PercentC_SOIL_2023 - PercentC_SOIL_2021,
-    Diff_PercentC_LITTER = PercentC_LITTER_2023 - PercentC_LITTER_2021,
-    Diff_PercentC_POPRC = PercentC_POPRC_2023 - PercentC_POPRC_2021,
-    Diff_PercentC_MISC = PercentC_MISC_2023 - PercentC_MISC_2021,
-    Diff_PercentC_SORU = PercentC_SORU_2023 - PercentC_SORU_2021,
-    Diff_PlantRichness = PlantRichness_2023 - PlantRichness_2021,
-    Diff_PlantDiversity = PlantDiversity_2023 - PlantDiversity_2021,
     Population_Origin = case_when(
       Population %in% c("YF", "DC", "SC") ~ "High",
       Population %in% c("UP", "FN") ~ "Low"
@@ -157,10 +96,29 @@ final_data_diff <- final_data %>%
     Transplant_Temp = case_when(
       Transplant == "Home" ~ "Home",
       Transplant == "North" ~ "Low",
-      Transplant == "South" ~ "High",
+      Transplant == "South" ~ "High"
     )
-  ) %>%
+  )
+
+# Create final_data_year with variables spread by Year
+final_data_year <- final_data %>%
+  pivot_wider(names_from = Year, values_from = all_of(response_vars), names_sep = "_") %>%
+  mutate(
+    Site_DailyMax = case_when(
+      Site %in% c("YF", "DC", "SC") ~ "High",
+      Site %in% c("UP", "FN") ~ "Low"
+    )
+  )
+
+# Create final_data_diff for differences between years
+final_data_diff <- final_data %>%
+  filter(Year %in% c("2021", "2023")) %>%
+  pivot_wider(names_from = Year, values_from = all_of(response_vars), names_sep = "_") %>%
+  mutate(across(starts_with("2023_"), 
+                ~ . - get(sub("2023_", "2021_", cur_column())), 
+                .names = "Diff_{.col}")) %>%
   dplyr::select(Sample_ID, Population, Site, Treatment, Transplant, Population_Origin, Transplant_Temp, starts_with("Diff_"))
+
 
 # Relevel for easier interpretation
 final_data_diff$Treatment <- as.factor(final_data_diff$Treatment)
@@ -168,12 +126,15 @@ final_data_diff$Treatment <- relevel(final_data_diff$Treatment, ref = "Vegetatio
 final_data_diff$Transplant_Temp <- as.factor(final_data_diff$Transplant_Temp)
 final_data_diff$Transplant_Temp <- relevel(final_data_diff$Transplant_Temp, ref = "Home")
 
+final_data_year$Treatment <- as.factor(final_data_year$Treatment)
+final_data_year$Treatment <- relevel(final_data_year$Treatment, ref = "Vegetation")
+final_data_year$Transplant <- as.factor(final_data_year$Transplant)
+final_data_year$Transplant <- relevel(final_data_year$Transplant, ref = "Home")
+
+# Model Structure: 2023 Response ~ 2021 Baseline + Treatment + Population_Origin * Transplant_Temp + (1 | Site)
 
 
-# Model Structure: Difference in Response ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site)
-
-
-### Models ----
+### LMMs ----
 
 library(lme4)
 library(ggplot2)
@@ -185,9 +146,10 @@ library(MuMIn)
 
 #### Decomposition ----
 
-hist(final_data_diff$Diff_MassLoss)
-Decomp_model <- lmer(Diff_MassLoss ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site), 
-                      data = final_data_diff)
+hist(final_data_year$MassLoss_2023)
+Decomp_model <- lmer(MassLoss_2023 ~ MassLoss_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                       (1 | Site), 
+                      data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(Decomp_model)
@@ -198,7 +160,8 @@ testZeroInflation(simulation_output)
 # significant KS but no overdispersion
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_MassLoss ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(MassLoss_2023 ~ MassLoss_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
 print(vif_values) 
 
@@ -209,7 +172,7 @@ print(vif_values)
 
 summary(Decomp_model)
 
-##### Fixed effects and confidence intervals together ----
+##### Non-parametric bootstrapping ----
 boot_model <- bootMer(Decomp_model, FUN = fixef, nsim = 1000)
 boot_replicates <- boot_model$t
 conf_intervals <- list()
@@ -232,40 +195,14 @@ print(decomp_effect_summary)
 
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(Decomp_model))
-
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(Decomp_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
 r_squared <- r.squaredGLMM(Decomp_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
-
-
-
-
-
-
-
-
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -275,28 +212,31 @@ cat("Conditional R² (variance explained by fixed + random effects):", r_squared
 
 #### SIR ----
 
-hist(final_data_diff$Diff_CO2CperHourperg)
+hist(final_data_year$CO2CperHourperg_2023)
 
-SIR_model <- lmer(Diff_CO2CperHourperg ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site), data = final_data_diff)
+SIR_model <- lmer(CO2CperHourperg_2023 ~ CO2CperHourperg_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                  (1 | Site), 
+                  data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(SIR_model)
-simulation_output <- simulateResiduals(fittedModel = SIR_model, n = 1000)
-plot(simulation_output) # heteroscedasticity in the model
+simulation_output <- simulateResiduals(fittedModel = SIR_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
 testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_CO2CperHourperg ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(CO2CperHourperg_2023 ~ CO2CperHourperg_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
 
 # LMM for SIR_model is the final model. The heteroscedasticity is not severe, and there is no indication of overdispersion
 # Use non-parametric bootstrapping to generate confidence intervals for the fixed effects 
 
 summary(SIR_model)
 
-##### Fixed effects and confidence intervals together ----
+##### Non-parametric bootstrapping ----
 boot_model <- bootMer(SIR_model, FUN = fixef, nsim = 1000)
 boot_replicates <- boot_model$t
 conf_intervals <- list()
@@ -319,33 +259,14 @@ print(SIR_effect_summary)
 
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(SIR_model))
-
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(SIR_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
 r_squared <- r.squaredGLMM(SIR_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
-
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -366,27 +287,31 @@ cat("Conditional R² (variance explained by fixed + random effects):", r_squared
 
 #### SORU Biomass ----
 
-hist(final_data_diff$Diff_SORU_Biomass)
+hist(final_data_year$SORU_Biomass_2023)
 
-SORU_biomass_model <- lmer(Diff_SORU_Biomass ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site), data = final_data_diff)
+SORU_biomass_model <- lmer(SORU_Biomass_2023 ~ SORU_Biomass_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                           (1 | Site), 
+                           data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(SORU_biomass_model)
-plot(simulateResiduals(fittedModel = SORU_biomass_model, n = 1000)) #significant KS, mild heteroscedasticity
+simulation_output <- simulateResiduals(fittedModel = SORU_biomass_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
 testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_SORU_Biomass ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(SORU_Biomass_2023 ~ SORU_Biomass_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
 
 
 # Use non-parametric bootstrapping to generate confidence intervals for the fixed effects 
 
 summary(SORU_biomass_model)
 
-##### Fixed effects and confidence intervals together ----
+##### Non-parametric bootstrapping ----
 boot_model <- bootMer(SORU_biomass_model, FUN = fixef, nsim = 1000)
 boot_replicates <- boot_model$t
 conf_intervals <- list()
@@ -409,58 +334,37 @@ print(SORUbiomass_effect_summary) # interpret
 
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(SORU_biomass_model))
-
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(SORU_biomass_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
 r_squared <- r.squaredGLMM(SORU_biomass_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
-
-
-
-
-
-
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
 
 #### POPRC_Biomass ----
-hist(final_data_diff$Diff_POPRC_Biomass)
+hist(final_data_year$POPRC_Biomass_2023)
 
-POPRC_biomass_model <- lmer(Diff_POPRC_Biomass ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site), data = final_data_diff)
+POPRC_biomass_model <- lmer(POPRC_Biomass_2023 ~ POPRC_Biomass_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                            (1 | Site), 
+                            data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(POPRC_biomass_model)
-simulation_output <- simulateResiduals(fittedModel = POPRC_biomass_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = POPRC_biomass_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
 testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_POPRC_Biomass ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(POPRC_Biomass_2023 ~ POPRC_Biomass_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
 
 
 
@@ -468,7 +372,7 @@ print(vif_values)
 
 summary(POPRC_biomass_model)
 
-##### Fixed effects and confidence intervals together ----
+##### Non-parametric bootstrapping ----
 boot_model <- bootMer(POPRC_biomass_model, FUN = fixef, nsim = 1000)
 boot_replicates <- boot_model$t
 conf_intervals <- list()
@@ -491,33 +395,14 @@ print(POPRCbiomass_effect_summary) # interpret
 
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(POPRC_biomass_model))
-
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(POPRC_biomass_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
 r_squared <- r.squaredGLMM(POPRC_biomass_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
-
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -530,19 +415,22 @@ cat("Conditional R² (variance explained by fixed + random effects):", r_squared
 
 
 #### N-min rate ----
-
-Nmin_model <- lmer(Diff_Overall_mineralization_rate ~ Treatment + Population_Origin * Transplant_Temp + (1 | Site), data = final_data_diff)
+hist(final_data_year$`Overall mineralization rate_2023`)
+Nmin_model <- lmer(`Overall mineralization rate_2023` ~ `Overall mineralization rate_2021` + Treatment + Population_Origin * Transplant_Temp + 
+                     (1 | Site), 
+                   data = final_data_year)
 plot(Nmin_model)
 
 # 1. Diagnostics - DHARMa package
-hist(final_data_diff$Diff_Overall_mineralization_rate)
+
 simulation_output <- simulateResiduals(fittedModel = Nmin_model, n = 1000)
 plot(simulation_output)
 testDispersion(simulation_output) 
 testZeroInflation(simulation_output) 
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_Overall_mineralization_rate ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(`Overall mineralization rate_2023` ~ `Overall mineralization rate_2021` + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
@@ -552,7 +440,7 @@ print(vif_values)
 
 summary(Nmin_model)
 
-##### Fixed effects and confidence intervals together ----
+##### Non-parametric bootstrapping ----
 boot_model <- bootMer(Nmin_model, FUN = fixef, nsim = 1000)
 boot_replicates <- boot_model$t
 conf_intervals <- list()
@@ -574,34 +462,17 @@ Nmin_effect_summary <- data.frame(
 print(Nmin_effect_summary) # interpret
 # two significant parameters, but the effect size is negligible
 
+
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(Nmin_model))
-
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(Nmin_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
 r_squared <- r.squaredGLMM(Nmin_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -613,45 +484,115 @@ cat("Conditional R² (variance explained by fixed + random effects):", r_squared
 
 
 
-#### TO DO: Soil %C ----
-SoilC_model <- lmer(Diff_PercentC_SOIL ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
-plot(SoilC_model)
+#### Soil %C ----
+SoilC_model <- lmer(PercentC_SOIL_2023 ~ PercentC_SOIL_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                    (1 | Site), 
+                    data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
-hist(final_data_diff$Diff_PercentC_SOIL)
-simulation_output <- simulateResiduals(fittedModel = SoilC_model, n = 1000)
-plot(simulation_output)
+plot(SoilC_model)
+simulation_output <- simulateResiduals(fittedModel = SoilC_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PercentC_SOIL ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PercentC_SOIL_2023 ~ PercentC_SOIL_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
 print(vif_values)
 
 
 
+summary(SoilC_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(SoilC_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(SoilC_model))
+fixed_effects <- fixef(SoilC_model)
+SoilC_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(SoilC_effect_summary) # interpret
+
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(SoilC_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
 
-
-
-#### TO DO: Soil %N ----
-hist(final_data_diff$Diff_PercentN_SOIL)
-SoilN_model <- lmer(Diff_PercentN_SOIL ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+#### Soil %N ----
+SoilN_model <- lmer(PercentN_SOIL_2023 ~ PercentN_SOIL_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                    (1 | Site), 
+                    data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(SoilN_model)
-simulation_output <- simulateResiduals(fittedModel = SoilN_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = SoilN_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PercentN_SOIL ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PercentN_SOIL_2023 ~ PercentN_SOIL_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
+
+summary(SoilN_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(SoilN_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(SoilN_model))
+fixed_effects <- fixef(SoilN_model)
+SoilN_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(SoilN_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(SoilN_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -662,66 +603,171 @@ print(vif_values)
 
 
 
-
-
-#### TO DO: Litter %N ----
-hist(final_data_diff$Diff_PercentN_LITTER)
-LitterN_model <- lmer(Diff_PercentN_LITTER ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+#### Litter %N ----
+LitterN_model <- lmer(PercentN_LITTER_2023 ~ PercentN_LITTER_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                      (1 | Site), 
+                      data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(LitterN_model)
-simulation_output <- simulateResiduals(fittedModel = LitterN_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = LitterN_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PercentN_LITTER ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PercentN_LITTER_2023 ~ PercentN_LITTER_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
+
+summary(LitterN_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(LitterN_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(LitterN_model))
+fixed_effects <- fixef(LitterN_model)
+LitterN_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(LitterN_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(LitterN_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
 
 
+#### POPRC %N ----
 
-#### TO DO: POPRC %N ----
-
-hist(final_data_diff$Diff_PercentN_POPRC)
-POPRCN_model <- lmer(Diff_PercentN_POPRC ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+POPRCN_model <- lmer(PercentN_POPRC_2023 ~ PercentN_POPRC_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                     (1 | Site), 
+                     data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(POPRCN_model)
-simulation_output <- simulateResiduals(fittedModel = POPRCN_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = POPRCN_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PercentN_POPRC ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PercentN_POPRC_2023 ~ PercentN_POPRC_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
+
+summary(POPRCN_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(POPRCN_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(POPRCN_model))
+fixed_effects <- fixef(POPRCN_model)
+POPRCN_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(POPRCN_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(POPRCN_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
 
-
-
-#### TO DO: SORU %N ----
-hist(final_data_diff$Diff_PercentN_SORU)
-SORUN_model <- lmer(Diff_PercentN_SORU ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+#### SORU %N ----
+SORUN_model <- lmer(PercentN_SORU_2023 ~ PercentN_SORU_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                    (1 | Site), 
+                    data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(SORUN_model)
-simulation_output <- simulateResiduals(fittedModel = SORUN_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = SORUN_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through ChatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PercentN_SORU ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PercentN_SORU_2023 ~ PercentN_SORU_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
+
+
+
+summary(SORUN_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(SORUN_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(SORUN_model))
+fixed_effects <- fixef(SORUN_model)
+SORUN_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(SORUN_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(SORUN_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
+
+
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -732,24 +778,57 @@ print(vif_values)
 
 
 
-
-#### TO DO: PlantRichness ----
-hist(final_data_diff$Diff_PlantRichness)
-PlantRichness_model <- lmer(Diff_PlantRichness ~ Treatment + Population_Origin * Transplant_Temp + (1| Site), data = final_data_diff)
+#### Plant Richness ----
+PlantRichness_model <- lmer(PlantRichness_2023 ~ PlantRichness_2021 + Treatment + Population_Origin * Transplant_Temp + 
+                            (1 | Site), 
+                            data = final_data_year)
 
 # 1. Diagnostics - DHARMa package
 plot(PlantRichness_model)
-simulation_output <- simulateResiduals(fittedModel = PlantRichness_model, n = 1000)
-plot(simulation_output)
+simulation_output <- simulateResiduals(fittedModel = PlantRichness_model, n = 1000) 
+plot(simulation_output) 
 testDispersion(simulation_output) 
-testZeroInflation(simulation_output) # zero-inflated, run through chatGPT
+testZeroInflation(simulation_output)
 
 # 2. Multicollinearity Assessment
-fixed_model <- lm(Diff_PlantRichness ~ Treatment + Population_Origin * Transplant_Temp, data = final_data_diff)
+fixed_model <- lm(PlantRichness_2023 ~ PlantRichness_2021 + Treatment + Population_Origin * Transplant_Temp, 
+                  data = final_data_year)
 vif_values <- vif(fixed_model)
-print(vif_values)
+print(vif_values) 
+
+summary(PlantRichness_model)
+
+##### Non-parametric bootstrapping ----
+boot_model <- bootMer(PlantRichness_model, FUN = fixef, nsim = 1000)
+boot_replicates <- boot_model$t
+conf_intervals <- list()
+for (i in 1:ncol(boot_replicates)) {
+  # Calculate the 2.5th and 97.5th percentiles for the ith fixed effect
+  conf_intervals[[i]] <- quantile(boot_replicates[, i], probs = c(0.025, 0.975))
+}
+conf_intervals_df <- do.call(rbind, conf_intervals)
+colnames(conf_intervals_df) <- c("Lower_CI", "Upper_CI")
+rownames(conf_intervals_df) <- names(fixef(PlantRichness_model))
+fixed_effects <- fixef(PlantRichness_model)
+PlantRichness_effect_summary <- data.frame(
+  Parameter = names(fixed_effects),
+  Estimate = fixed_effects,
+  Lower_CI = conf_intervals_df[, "Lower_CI"],
+  Upper_CI = conf_intervals_df[, "Upper_CI"]
+)
+
+print(PlantRichness_effect_summary) # interpret
+
+##### Variance partitioning ----
+
+r_squared <- r.squaredGLMM(PlantRichness_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
 
 
+# Print results
+cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
+cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
@@ -796,37 +875,91 @@ PlantDiversity_effect_summary <- data.frame(
 )
 
 print(PlantDiversity_effect_summary) # interpret
-# two significant parameters, but the effect size is negligible
 
 ##### Variance partitioning ----
 
-# Extract the variance components of the random effects
-random_effects_variance <- as.data.frame(VarCorr(PlantDiversity_model))
+r_squared <- r.squaredGLMM(PlantDiversity_model)
+random_effects_variance <- r_squared[2] - r_squared[1]
 
-# Extract the variance for the random effects and residuals
-site_variance <- random_effects_variance$vcov[1]  
-residual_variance <- attr(VarCorr(PlantDiversity_model), "sc")^2
-
-# Calculate total variance
-total_variance <- site_variance + residual_variance
-
-# Calculate the proportion of variance explained by the random effect (Site)
-random_effect_variance_proportion <- site_variance / total_variance
-
-# Calculate the proportion of variance explained by the residuals
-residual_variance_proportion <- residual_variance / total_variance
-
-# Print results
-cat("Proportion of variance explained by Site (Random Effect):", random_effect_variance_proportion)
-cat("Proportion of variance explained by Residuals:", residual_variance_proportion)
-
-# Calculate the marginal and conditional R² values
-r_squared <- r.squaredGLMM(Nmin_model)
 
 # Print results
 cat("Marginal R² (variance explained by fixed effects):", r_squared[1])
 cat("Conditional R² (variance explained by fixed + random effects):", r_squared[2])
+cat("Variance explained by random effects:", random_effects_variance)
 
 
 
 
+
+
+### SEMs ----
+
+# Load necessary libraries
+library(ggplot2)
+library(ggpmisc)
+
+# Plot: Change in litter %N and the change in decomposition rate
+ggplot(final_data_diff, aes(x = Diff_PercentN_LITTER, y = Diff_MassLoss, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Litter %N vs Change in Decomposition Rate",
+       x = "Change in Litter %N",
+       y = "Change in Decomposition Rate") +
+  facet_wrap(~ Site)
+
+# Plot: Change in litter %N and the change in SIR
+ggplot(final_data_diff, aes(x = Diff_PercentN_LITTER, y = Diff_CO2CperHourperg, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Litter %N vs Change in SIR",
+       x = "Change in Litter %N",
+       y = "Change in SIR") +
+  facet_wrap(~ Site)
+
+# Plot: Change in soil %N and the change in SIR
+ggplot(final_data_diff, aes(x = Diff_PercentN_SOIL, y = Diff_CO2CperHourperg, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Soil %N vs Change in SIR",
+       x = "Change in Soil %N",
+       y = "Change in SIR") +
+  facet_wrap(~ Site)
+
+# Plot: Change in plant diversity and the change in N-min
+ggplot(final_data_diff, aes(x = Diff_PlantDiversity, y = Diff_Overall_mineralization_rate, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Plant Diversity vs Change in N-min",
+       x = "Change in Plant Diversity",
+       y = "Change in N-min") +
+  facet_wrap(~ Site)
+
+# Plot: Change in soil %C and change in decomposition
+ggplot(final_data_diff, aes(x = Diff_PercentC_SOIL, y = Diff_MassLoss, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Soil %C vs Change in Decomposition",
+       x = "Change in Soil %C",
+       y = "Change in Decomposition") +
+  facet_wrap(~ Site)
+
+# Plot: Change in soil %N and change in plant diversity
+ggplot(final_data_diff, aes(x = Diff_PercentC_SOIL, y = Diff_PlantDiversity, color = Site)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right", label.y.npc = "top") +
+  labs(title = "Change in Soil %C vs Change in Plant Diversity",
+       x = "Change in Soil %C",
+       y = "Change in Plant Diversity") +
+  facet_wrap(~ Site)
