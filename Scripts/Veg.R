@@ -227,3 +227,4 @@ biomass_differences %>%
   scale_fill_brewer(palette = "Paired") + 
   theme_classic() + 
   coord_flip()
+
