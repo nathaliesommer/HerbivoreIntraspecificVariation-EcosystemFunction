@@ -193,38 +193,3 @@ combined_diversity_long <- full_join(diversity_2021, diversity_2023, by = "Cage.
     names_to = c(".value", "Year"),
     names_sep = "_"
   ) 
-
-### Exploratory Data Viz ----
-biomass_differences %>%
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>%
-  ggplot(aes(x = Transplant, y = SORU_Biomass_Diff, fill = Treatment)) +
-  geom_boxplot() +
-  labs(title = "SORU Change in Biomass",
-       x = "Treatment",
-       y = "SORU Change (g)") +
-  scale_fill_brewer(palette = "Paired") + 
-  theme_classic() + 
-  coord_flip()
-
-biomass_differences %>%
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>%
-  ggplot(aes(x = Transplant, y = POPRC_Biomass_Diff, fill = Treatment)) +
-  geom_boxplot() +
-  labs(title = "POPRC Change in Biomass",
-       x = "Treatment",
-       y = "POPRC Change (g)") +
-  scale_fill_brewer(palette = "Paired") + 
-  theme_classic() + 
-  coord_flip()
-
-biomass_differences %>%
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "DC", "MC", "UP"))) %>%
-  ggplot(aes(x = Transplant, y = MISC_Biomass_Diff, fill = Treatment)) +
-  geom_boxplot() +
-  labs(title = "MISC Change in Biomass",
-       x = "Treatment",
-       y = "MISC Change (g)") +
-  scale_fill_brewer(palette = "Paired") + 
-  theme_classic() + 
-  coord_flip()
-
