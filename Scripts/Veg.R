@@ -5,7 +5,6 @@ library(tidyr)
 library(broom)
 library(purrr)
 library(ggplot2)
-library(RColorBrewer)
 
 ## Data Import and Cleaning ----
 
@@ -52,6 +51,8 @@ cage_diversity_long <- cage_diversity %>%
   ) %>% 
   select(-Cover_Sum)
 
+
+
 functional_groups <- cage_diversity_long %>%
   group_by(Cage.ID, Year, Population, Treatment, Transplant, Site, Replicate) %>% 
   summarise(
@@ -62,6 +63,7 @@ functional_groups <- cage_diversity_long %>%
   pivot_longer(cols = SORU:MISC, names_to = "Species_ID", values_to = "Cover") %>%
   ungroup() %>% 
   drop_na()
+
 
 
 ## Allometry ----
@@ -192,4 +194,5 @@ combined_diversity_long <- full_join(diversity_2021, diversity_2023, by = "Cage.
     cols = starts_with("Plant"),
     names_to = c(".value", "Year"),
     names_sep = "_"
-  ) 
+  )
+
