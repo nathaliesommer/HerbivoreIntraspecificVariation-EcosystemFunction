@@ -3,6 +3,7 @@
 # UPDATED Sep 17 2024
 
 library(tidyverse)
+library(dplyr)
 
 # Function to calculate mean standard values
 calculate_mean_standard <- function(stds) {
@@ -209,4 +210,57 @@ SIR_final_data <- SIR_final_data %>%
     substr(Sample_ID, 5, 5) == "P" ~ "Predator"
   )) %>%
   mutate(Population = substr(Sample_ID, 1, 2))
+
+
+### Permute UPH_H7 and YFN_H2 2023
+
+# Create new rows with specified information
+new_sir_rows <- tibble(
+  Sample_ID = c("UPH_H7", "YFN_H2"),
+  Year = c(2023, 2023),
+  Population = c("UP", "YF"),
+  Site = c("UP", "UP"),
+  Trophic_Treatment = c("Herbivore", "Herbivore")
+)
+
+# Function to calculate average CO2CperHourperg based on matching conditions
+average_sir_rates <- function(data, new_row) {
+  # Filter existing data to find matching rows
+  matching_rows <- data %>%
+    filter(
+      Year == new_row$Year,
+      Population == new_row$Population,
+      Site == new_row$Site,
+      Trophic_Treatment == new_row$Trophic_Treatment
+    )
+  
+  # Calculate the average CO2CperHourperg if matching rows are found
+  if (nrow(matching_rows) > 0) {
+    CO2CperHourperg <- mean(matching_rows$CO2CperHourperg, na.rm = TRUE)
+  } else {
+    # If no matching rows are found, set CO2CperHourperg to NA
+    CO2CperHourperg <- NA
+  }
+  
+  return(CO2CperHourperg)
+}
+
+# Apply the average calculation function to each new row
+new_sir_rows <- new_sir_rows %>%
+  rowwise() %>%
+  mutate(
+    CO2CperHourperg = average_sir_rates(SIR_final_data, list(
+      Year = Year,
+      Population = Population,
+      Site = Site,
+      Trophic_Treatment = Trophic_Treatment
+    ))
+  ) %>%
+  ungroup()
+
+# Combine the new rows with the existing data
+SIR_final_data <- bind_rows(SIR_final_data, new_sir_rows)
+
+
+
 

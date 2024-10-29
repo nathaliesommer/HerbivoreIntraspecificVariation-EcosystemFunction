@@ -187,6 +187,68 @@ N_min_full_data <- bind_rows(N_min_2021_clean, N_min_2023_clean) %>%
 
 
 
+
+
+### Permute UPH_H7 and YFN_H2 2023
+
+# Create new rows with specified information
+new_rows <- tibble(
+  Sample.ID = c("UPH_H7", "YFN_H2"),
+  Year = c(2023, 2023),
+  Transplant_Treatment = c("Home", "North"),
+  Trophic_Treatment = c("Herbivore", "Herbivore"),
+  Population = c("UP", "YF"),
+  Site = c("UP", "UP")
+)
+
+# Function to calculate average rates based on matching conditions
+average_rates <- function(data, new_row) {
+  matching_rows <- data %>%
+    filter(
+      Year == new_row$Year,
+      Population == new_row$Population,
+      Site == new_row$Site,
+      Trophic_Treatment == new_row$Trophic_Treatment
+    )
+  
+  if (nrow(matching_rows) > 0) {
+    Ammonium_rate <- mean(matching_rows$`Ammonium rate`, na.rm = TRUE)
+    Nitrate_rate <- mean(matching_rows$`Nitrate rate`, na.rm = TRUE)
+    Overall_mineralization_rate <- mean(matching_rows$`Overall mineralization rate`, na.rm = TRUE)
+  } else {
+    Ammonium_rate <- NA
+    Nitrate_rate <- NA
+    Overall_mineralization_rate <- NA
+  }
+  
+  return(c(Ammonium_rate, Nitrate_rate, Overall_mineralization_rate))
+}
+
+# Apply the average calculation function to each new row
+new_rows <- new_rows %>%
+  rowwise() %>%
+  mutate(
+    rates = list(average_rates(N_min_full_data, as.list(cur_data()))),
+    `Ammonium rate` = rates[[1]],
+    `Nitrate rate` = rates[[2]],
+    `Overall mineralization rate` = rates[[3]]
+  ) %>%
+  select(-rates) %>%
+  ungroup()
+
+# Combine the new rows with the existing data
+N_min_full_data <- bind_rows(N_min_full_data, new_rows)
+
+# View the updated data
+print(N_min_full_data)
+
+
+
+
+
+
+
+
 ## GRAPHS ----
 # Load required library
 library(ggplot2)
@@ -285,202 +347,6 @@ ggplot(N_min_diff, aes(x = Population, y = Diff_Overall_Rate, fill = Transplant_
     subtitle = "Grouped by Transplant Treatment",
     x = "Population",
     y = "Change in Overall Mineralization Rate (g N/cm² per month)",
-    fill = "Transplant Treatment",
-    color = "Transplant Treatment"
-  ) +
-  scale_fill_brewer(palette = "Set2") +
-  scale_color_brewer(palette = "Set2") +
-  coord_flip()
-
-
-
-#### Nitrate ----
-# Create a plot of overall rates by site
-ggplot(N_min_2021_clean, aes(x = Site, y = `Nitrate rate`, fill = Site)) +
-  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-  geom_jitter(width = 0.2, alpha = 0.6) + # Adds points for individual data
-  theme_classic() +
-  scale_fill_brewer(palette = "Set2") +
-  coord_flip() + 
-  labs(
-    title = "Nitrate Rate by Site",
-    x = "Site",
-    y = "Nitrate Rate (g NO3-/cm² per month)"
-  )
-
-# Calculate the standard deviation of the overall rate by site
-site_variability_nitrate <- N_min_2021_clean %>%
-  group_by(Site) %>%
-  summarize(
-    Within_Site_SD = sd(`Nitrate rate`, na.rm = TRUE),
-    Sample_Size = n()
-  )
-
-# Calculate the overall standard deviation across all sites
-nitrate_variability <- tibble(
-  Site = "Overall",
-  Within_Site_SD = sd(N_min_2021_clean$`Nitrate rate`, na.rm = TRUE),
-  Sample_Size = nrow(N_min_2021_clean)
-)
-
-# Combine the site-specific variability with overall variability
-nitrate_variability_data <- bind_rows(nitrate_variability, site_variability_nitrate)
-
-# Add a column to distinguish between site-specific and overall variability
-nitrate_variability_data <- nitrate_variability_data %>%
-  mutate(Variability_Type = ifelse(Site == "Overall", "Overall Variability", "Within Site Variability"))
-
-# Order the bars sequentially by SD
-nitrate_variability_data <- nitrate_variability_data %>%
-  arrange(desc(Within_Site_SD))
-
-# Create the plot
-ggplot(nitrate_variability_data, aes(x = reorder(Site, -Within_Site_SD), y = Within_Site_SD, fill = Variability_Type)) +
-  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.7) +
-  geom_text(aes(label = Sample_Size), 
-            position = position_dodge(width = 0.9), 
-            vjust = -0.2, hjust = -0.2) +
-  theme_classic() +
-  labs(x = "Site", y = "Standard Deviation of Nitrate Mineralization Rate (g NH4+/cm² per month)") +
-  scale_fill_brewer(palette = "Paired") +
-  coord_flip() +
-  ggtitle("Variability of Nitrate Mineralization Within and Across Sites")
-
-
-# Calculate the difference in ammonium mineralization rate between 2023 and 2021
-Nitrate_diff <- N_min_full_data %>%
-  select(Sample.ID, Year, Population, Site, Transplant_Treatment, Trophic_Treatment, `Nitrate rate`) %>%
-  spread(key = Year, value = `Nitrate rate`) %>%
-  mutate(Diff_ammonium_Rate = `2023` - `2021`) %>%
-  select(Sample.ID, Population, Site, Transplant_Treatment, Trophic_Treatment, Diff_Nitrate_Rate) %>% 
-  # Filter out rows where Site or Population is "MC"
-  filter(Site != "MC", Population != "MC")
-
-# Plot 1: Grouped by Trophic Treatment
-ggplot(Nitrate_diff, aes(x = Population, y = Diff_Nitrate_Rate, fill = Trophic_Treatment)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.7, position = position_dodge(width = 0.75)) +  # Align boxplots
-  geom_jitter(aes(color = Trophic_Treatment), alpha = 0.5, position = position_dodge(width = 0.75)) +  # Align jitter points
-  theme_classic() +
-  labs(
-    title = "Difference in Nitrate Nitrogen Mineralization Rate (Treatment - Baseline)",
-    subtitle = "Grouped by Trophic Treatment",
-    x = "Population",
-    y = "Change in Nitrate Mineralization Rate (g NO3-/cm² per month)",
-    fill = "Trophic Treatment",
-    color = "Trophic Treatment"
-  ) +
-  scale_fill_brewer(palette = "Set2") +
-  scale_color_brewer(palette = "Set2") +
-  coord_flip()
-
-# Plot 2: Grouped by Transplant Treatment
-ggplot(Nitrate_diff, aes(x = Population, y = Diff_Nitrate_Rate, fill = Transplant_Treatment)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.7, position = position_dodge(width = 0.75)) +  # Align boxplots
-  geom_jitter(aes(color = Transplant_Treatment), alpha = 0.5, position = position_dodge(width = 0.75)) +  # Align jitter points
-  theme_classic() +
-  labs(
-    title = "Difference in Nitrate Mineralization Rate (Treatment - Baseline)",
-    subtitle = "Grouped by Transplant Treatment",
-    x = "Population",
-    y = "Change in Nitrate Mineralization Rate (g NO3-/cm² per month)",
-    fill = "Transplant Treatment",
-    color = "Transplant Treatment"
-  ) +
-  scale_fill_brewer(palette = "Set2") +
-  scale_color_brewer(palette = "Set2") +
-  coord_flip()
-
-
-
-#### Ammonium ----
-# Create a plot of overall rates by site
-ggplot(N_min_2021_clean, aes(x = Site, y = `Ammonium rate`, fill = Site)) +
-  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-  geom_jitter(width = 0.2, alpha = 0.6) + # Adds points for individual data
-  theme_classic() +
-  scale_fill_brewer(palette = "Set2") +
-  coord_flip() + 
-  labs(
-    title = "Ammonium Rate by Site",
-    x = "Site",
-    y = "Ammonium Rate (g NH4+/cm² per month)"
-  )
-
-# Calculate the standard deviation of the overall rate by site
-site_variability_ammonium <- N_min_2021_clean %>%
-  group_by(Site) %>%
-  summarize(
-    Within_Site_SD = sd(`Ammonium rate`, na.rm = TRUE),
-    Sample_Size = n()
-  )
-
-# Calculate the overall standard deviation across all sites
-Ammonium_variability <- tibble(
-  Site = "Overall",
-  Within_Site_SD = sd(N_min_2021_clean$`Ammonium rate`, na.rm = TRUE),
-  Sample_Size = nrow(N_min_2021_clean)
-)
-
-# Combine the site-specific variability with overall variability
-ammonium_variability_data <- bind_rows(ammonium_variability, site_variability_ammonium)
-
-# Add a column to distinguish between site-specific and overall variability
-ammonium_variability_data <- ammonium_variability_data %>%
-  mutate(Variability_Type = ifelse(Site == "Overall", "Overall Variability", "Within Site Variability"))
-
-# Order the bars sequentially by SD
-ammonium_variability_data <- ammonium_variability_data %>%
-  arrange(desc(Within_Site_SD))
-
-# Create the plot
-ggplot(ammonium_variability_data, aes(x = reorder(Site, -Within_Site_SD), y = Within_Site_SD, fill = Variability_Type)) +
-  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.7) +
-  geom_text(aes(label = Sample_Size), 
-            position = position_dodge(width = 0.9), 
-            vjust = -0.2, hjust = -0.2) +
-  theme_classic() +
-  labs(x = "Site", y = "Standard Deviation of Ammonium Mineralization Rate (g NO3-/cm² per month)") +
-  scale_fill_brewer(palette = "Paired") +
-  coord_flip() +
-  ggtitle("Variability of Ammonium Mineralization Within and Across Sites")
-
-
-# Calculate the difference in ammonium mineralization rate between 2023 and 2021
-ammonium_diff <- N_min_full_data %>%
-  select(Sample.ID, Year, Population, Site, Transplant_Treatment, Trophic_Treatment, `Ammonium rate`) %>%
-  spread(key = Year, value = `Ammonium rate`) %>%
-  mutate(Diff_ammonium_Rate = `2023` - `2021`) %>%
-  select(Sample.ID, Population, Site, Transplant_Treatment, Trophic_Treatment, Diff_ammonium_Rate) %>% 
-  # Filter out rows where Site or Population is "MC"
-  filter(Site != "MC", Population != "MC")
-
-# Plot 1: Grouped by Trophic Treatment
-ggplot(ammonium_diff, aes(x = Population, y = Diff_ammonium_Rate, fill = Trophic_Treatment)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.7, position = position_dodge(width = 0.75)) +  # Align boxplots
-  geom_jitter(aes(color = Trophic_Treatment), alpha = 0.5, position = position_dodge(width = 0.75)) +  # Align jitter points
-  theme_classic() +
-  labs(
-    title = "Difference in Ammonium Nitrogen Mineralization Rate (Treatment - Baseline)",
-    subtitle = "Grouped by Trophic Treatment",
-    x = "Population",
-    y = "Change in Ammonium Mineralization Rate (g NH4+/cm² per month)",
-    fill = "Trophic Treatment",
-    color = "Trophic Treatment"
-  ) +
-  scale_fill_brewer(palette = "Set2") +
-  scale_color_brewer(palette = "Set2") +
-  coord_flip()
-
-# Plot 2: Grouped by Transplant Treatment
-ggplot(ammonium_diff, aes(x = Population, y = Diff_ammonium_Rate, fill = Transplant_Treatment)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.7, position = position_dodge(width = 0.75)) +  # Align boxplots
-  geom_jitter(aes(color = Transplant_Treatment), alpha = 0.5, position = position_dodge(width = 0.75)) +  # Align jitter points
-  theme_classic() +
-  labs(
-    title = "Difference in Ammonium Mineralization Rate (Treatment - Baseline)",
-    subtitle = "Grouped by Transplant Treatment",
-    x = "Population",
-    y = "Change in Ammonium Mineralization Rate (g NO3-/cm² per month)",
     fill = "Transplant Treatment",
     color = "Transplant Treatment"
   ) +
