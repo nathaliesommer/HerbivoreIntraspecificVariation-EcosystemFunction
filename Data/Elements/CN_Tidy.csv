@@ -146,6 +146,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,DCH_V7 POPRC (Plant),DCH_V7,7,DC,DC,Home,Vegetation,Cage,POPRC,3.118,1.5,41.7,26.1,
 2021,M_DCH_V7,DCH_V7,7,DC,DC,Home,Vegetation,Cage,MISC,1.718,2.3,45,19,
 2021,P_DCH_V7,DCH_V7,7,DC,DC,Home,Vegetation,Cage,POPRC,1.833,2.4,43.9,17.8,
+2023,NA,DCH_V7,7,DC,DC,Home,Vegetation,Cage,MISC,NA,NA,NA,NA,None
 2023,DCH_V7 SORU (Plant),DCH_V7,7,DC,DC,Home,Vegetation,Cage,SORU,3.16,2.6,45.9,17,
 2021,S_DCH_V7,DCH_V7,7,DC,DC,Home,Vegetation,Cage,SORU,1.539,5.1,74.5,14.5,
 2021,DCH_V8,DCH_V8,8,DC,DC,Home,Vegetation,Cage,SOIL,10.232,0.2,2.5,11.1,
@@ -206,6 +207,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,POPRC,1.793,1.8,43.3,24,
 2021,S_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,SORU,1.824,2.3,47.7,20.5,
 2021,M_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,MISC,1.516,2.6,45,16.8,
+2023,NA,DCN_H5,5,DC,UP,North,Herbivore,Cage,LITTER,NA,NA,NA,NA,None
 2023,DCN_H5 SORU (Plant),DCN_H5,5,DC,UP,North,Herbivore,Cage,SORU,2.988,2.7,46,16.7,
 2021,DCN_H6,DCN_H6,6,DC,UP,North,Herbivore,Cage,SOIL,10.088,0.1,1.9,10.2,
 2023,DCN_H6 SOIL,DCN_H6,6,DC,UP,North,Herbivore,Cage,SOIL,10.005,0.1,2.4,12.3,
@@ -269,7 +271,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,M_DCS_H4,DCS_H4,4,DC,YF,South,Herbivore,Cage,MISC,1.613,1.5,38.8,24.6,
 2023,DCS_H4 POPRC (Plant),DCS_H4,4,DC,YF,South,Herbivore,Cage,POPRC,3.089,1.8,42.6,22.9,
 2021,P_DCS_H4,DCS_H4,4,DC,YF,South,Herbivore,Cage,POPRC,1.682,2.3,39.6,16.6,
-2021,S_DCS_H4,DCS_H4,4,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,DCS_H4,4,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,DCS_H5,DCS_H5,5,DC,YF,South,Herbivore,Cage,SOIL,10.244,0.1,2.1,13.1,
 2023,DCS_H5 SOIL,DCS_H5,5,DC,YF,South,Herbivore,Cage,SOIL,10.014,0.3,4,12.7,
 2023,DCS_H5 LITTER (Plant),DCS_H5,5,DC,YF,South,Herbivore,Cage,LITTER,3.044,0.9,44.9,47,
@@ -354,7 +356,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_FNH_H5,FNH_H5,5,FN,FN,Home,Herbivore,Cage,POPRC,1.676,2.3,39.6,17.1,
 2023,FNH_H5 SORU (Plant),FNH_H5,5,FN,FN,Home,Herbivore,Cage,SORU,3.096,2.5,46.6,18.3,
 2021,S_FNH_H5,FNH_H5,5,FN,FN,Home,Herbivore,Cage,SORU,1.617,3.6,46.7,12.9,
-2021,M_FNH_H5,FNH_H5,5,FN,FN,Home,Herbivore,Cage,MISC,NA,NA,NA,NA,None
+2021,NA,FNH_H5,5,FN,FN,Home,Herbivore,Cage,MISC,NA,NA,NA,NA,None
 2021,FNH_H6,FNH_H6,6,FN,FN,Home,Herbivore,Cage,SOIL,10.117,0.2,3.3,11.3,
 2023,FNH_H6 SOIL,FNH_H6,6,FN,FN,Home,Herbivore,Cage,SOIL,10.126,0.3,3.6,11.5,
 2021,L_FNH_H6,FNH_H6,6,FN,FN,Home,Herbivore,Cage,LITTER,1.712,1.2,23.9,19,
@@ -364,7 +366,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,FNH_H6 POPRC (Plant),FNH_H6,6,FN,FN,Home,Herbivore,Cage,POPRC,3.272,3,43.9,14.6,
 2021,P_FNH_H6,FNH_H6,6,FN,FN,Home,Herbivore,Cage,POPRC,1.758,3.1,39.6,12.7,
 2021,S_FNH_H6,FNH_H6,6,FN,FN,Home,Herbivore,Cage,SORU,1.736,5.1,71.4,13.8,
-2021,M_FNH_H6,FNH_H6,6,FN,FN,Home,Herbivore,Cage,MISC,NA,NA,NA,NA,None
+2021,NA,FNH_H6,6,FN,FN,Home,Herbivore,Cage,MISC,NA,NA,NA,NA,None
 2021,FNH_H7,FNH_H7,7,FN,FN,Home,Herbivore,Cage,SOIL,10.516,0.3,4.1,11.1,
 2023,FNH_H7 SOIL,FNH_H7,7,FN,FN,Home,Herbivore,Cage,SOIL,10.244,0.3,4,11.8,
 2023,FNH_H7 POPRC (Plant),FNH_H7,7,FN,FN,Home,Herbivore,Cage,POPRC,3.352,0.8,43.6,48.6,
@@ -473,7 +475,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_FNN_H1,FNN_H1,1,FN,UP,North,Herbivore,Cage,POPRC,1.853,2.1,39.6,18.6,
 2021,M_FNN_H1,FNN_H1,1,FN,UP,North,Herbivore,Cage,MISC,1.698,2.2,42.4,18.8,
 2023,FNN_H1 SORU (Plant),FNN_H1,1,FN,UP,North,Herbivore,Cage,SORU,3.121,2.4,44,17.7,
-2021,S_FNN_H1,FNN_H1,1,FN,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,FNN_H1,1,FN,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,FNN_H2,FNN_H2,2,FN,UP,North,Herbivore,Cage,SOIL,10.302,0.2,2.7,11.9,
 2023,FNN_H2 SOIL,FNN_H2,2,FN,UP,North,Herbivore,Cage,SOIL,10.698,0.2,2.7,12.1,
 2021,L_FNN_H2,FNN_H2,2,FN,UP,North,Herbivore,Cage,LITTER,1.882,1,43.5,40.7,
@@ -483,7 +485,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_FNN_H2,FNN_H2,2,FN,UP,North,Herbivore,Cage,POPRC,1.601,1.7,42.8,23.9,
 2023,FNN_H2 SORU (Plant),FNN_H2,2,FN,UP,North,Herbivore,Cage,SORU,3.13,2.2,45.3,20.1,
 2021,M_FNN_H2,FNN_H2,2,FN,UP,North,Herbivore,Cage,MISC,1.896,3.1,43.5,13.8,
-2021,S_FNN_H2,FNN_H2,2,FN,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,FNN_H2,2,FN,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,FNN_H3,FNN_H3,3,FN,UP,North,Herbivore,Cage,SOIL,10.261,0.1,2.2,11.6,
 2023,FNN_H3 SOIL,FNN_H3,3,FN,UP,North,Herbivore,Cage,SOIL,10.916,0.2,2.5,11.9,
 2021,L_FNN_H3,FNN_H3,3,FN,UP,North,Herbivore,Cage,LITTER,1.904,0.6,43.2,71.1,
@@ -553,7 +555,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,L_FNS_H2,FNS_H2,2,FN,YF,South,Herbivore,Cage,LITTER,1.772,0.9,45.7,48.4,
 2023,FNS_H2 LITTER (Plant),FNS_H2,2,FN,YF,South,Herbivore,Cage,LITTER,3.181,1.2,44.9,36.1,
 2023,FNS_H2 POPRC (Plant),FNS_H2,2,FN,YF,South,Herbivore,Cage,POPRC,3.004,1.5,44.6,28.2,
-2021,M_FNS_H2,FNS_H2,2,UP,YF,South,Herbivore,Cage,MISC,1.811,1.9,41.5,21,
+2021,M_FNS_H2,FNS_H2,2,FN,YF,South,Herbivore,Cage,MISC,1.811,1.9,41.5,21,
 2021,P_FNS_H2,FNS_H2,2,FN,YF,South,Herbivore,Cage,POPRC,1.673,1.9,43.9,22.4,
 2023,FNS_H2 MISC (Plant),FNS_H2,2,FN,YF,South,Herbivore,Cage,MISC,3.196,2,42.5,20.8,
 2021,S_FNS_H2,FNS_H2,2,FN,YF,South,Herbivore,Cage,SORU,1.598,2.2,47,21.3,
@@ -574,7 +576,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,S_FNS_H4,FNS_H4,4,FN,YF,South,Herbivore,Cage,SORU,2.062,2,46.7,22.8,
 2023,FNS_H4 POPRC (Plant),FNS_H4,4,FN,YF,South,Herbivore,Cage,POPRC,3.084,2.1,43.2,20.1,
 2021,P_FNS_H4,FNS_H4,4,FN,YF,South,Herbivore,Cage,POPRC,2.099,2.2,39.6,17.6,
-2021,M_FNS_H4,FNS_H4,4,UP,YF,South,Herbivore,Cage,MISC,1.587,2.3,40.8,17.5,
+2021,M_FNS_H4,FNS_H4,4,FN,YF,South,Herbivore,Cage,MISC,1.587,2.3,40.8,17.5,
 2023,FNS_H5 SOIL,FNS_H5,5,FN,YF,South,Herbivore,Cage,SOIL,10.178,0.1,1.8,11,
 2021,FNS_H5,FNS_H5,5,FN,YF,South,Herbivore,Cage,SOIL,10.532,0.2,2.2,10.7,
 2023,FNS_H5 LITTER (Plant),FNS_H5,5,FN,YF,South,Herbivore,Cage,LITTER,3.049,1,45.9,44.4,
@@ -592,7 +594,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,FNS_H6 MISC (Plant),FNS_H6,6,FN,YF,South,Herbivore,Cage,MISC,3.667,2,42.9,20.5,
 2023,FNS_H6 POPRC (Plant),FNS_H6,6,FN,YF,South,Herbivore,Cage,POPRC,3.429,2,44.6,22.2,
 2023,FNS_H6 SORU (Plant),FNS_H6,6,FN,YF,South,Herbivore,Cage,SORU,3.082,2.2,46.8,20.7,
-2021,M_FNS_H6,FNS_H6,6,UP,YF,South,Herbivore,Cage,MISC,1.747,2.3,42.8,18.3,Imputed
+2021,NA,FNS_H6,6,FN,YF,South,Herbivore,Cage,MISC,NA,2.3,42.8,18.3,Imputed
 2021,P_FNS_H6,FNS_H6,6,FN,YF,South,Herbivore,Cage,POPRC,1.978,2.5,45.8,17.8,
 2021,FNS_H7,FNS_H7,7,FN,YF,South,Herbivore,Cage,SOIL,10.048,0.1,2,10.3,
 2023,FNS_H7 SOIL,FNS_H7,7,FN,YF,South,Herbivore,Cage,SOIL,10.042,0.2,3.2,12.1,
@@ -601,7 +603,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,FNS_H7 POPRC (Plant),FNS_H7,7,FN,YF,South,Herbivore,Cage,POPRC,3.066,2.1,44,20.7,
 2023,FNS_H7 SORU (Plant),FNS_H7,7,FN,YF,South,Herbivore,Cage,SORU,3.505,2.4,47.9,19.7,
 2023,FNS_H7 MISC (Plant),FNS_H7,7,FN,YF,South,Herbivore,Cage,MISC,3.421,2.6,45.5,17.2,
-2021,M_FNS_H7,FNS_H7,7,UP,YF,South,Herbivore,Cage,MISC,1.718,2.7,42.8,15.8,
+2021,M_FNS_H7,FNS_H7,7,FN,YF,South,Herbivore,Cage,MISC,1.718,2.7,42.8,15.8,
 2021,P_FNS_H7,FNS_H7,7,FN,YF,South,Herbivore,Cage,POPRC,1.525,3.1,45.4,14.2,
 2021,S_FNS_H7,FNS_H7,7,FN,YF,South,Herbivore,Cage,SORU,1.545,3.2,47.5,14.7,
 2023,FNS_H8 SOIL,FNS_H8,8,FN,YF,South,Herbivore,Cage,SOIL,10.375,0.2,2.5,11.2,
@@ -692,7 +694,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,SCH_H8 SORU (Plant),SCH_H8,8,SC,SC,Home,Herbivore,Cage,SORU,3.154,2.1,46.2,21.3,
 2023,SCH_H8 POPRC (Plant),SCH_H8,8,SC,SC,Home,Herbivore,Cage,POPRC,3.299,2.4,43.9,17.7,
 2021,M_SCH_H8,SCH_H8,8,SC,SC,Home,Herbivore,Cage,MISC,1.739,3.2,43,13.1,
-2021,S_SCH_H8,SCH_H8,8,SC,SC,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,SCH_H8,8,SC,SC,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,SCH_V1,SCH_V1,1,SC,SC,Home,Vegetation,Cage,SOIL,10.557,0.3,4.7,12.1,
 2023,SCH_V1 SOIL,SCH_V1,1,SC,SC,Home,Vegetation,Cage,SOIL,10.484,0.3,4.8,12.5,
 2023,SCH_V1 LITTER (Plant),SCH_V1,1,SC,SC,Home,Vegetation,Cage,LITTER,3.018,0.8,45.7,55.3,
@@ -970,7 +972,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_UPH_H4,UPH_H4,4,UP,UP,Home,Herbivore,Cage,POPRC,1.778,1.8,39.6,21.5,
 2021,M_UPH_H4,UPH_H4,4,UP,UP,Home,Herbivore,Cage,MISC,1.985,2.1,44.9,20.8,
 2023,UPH_H4 SORU (Plant),UPH_H4,4,UP,UP,Home,Herbivore,Cage,SORU,3.671,2.5,46.7,18.2,
-2021,S_UPH_H4,UPH_H4,4,UP,UP,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,UPH_H4,4,UP,UP,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,UPH_H5,UPH_H5,5,UP,UP,Home,Herbivore,Cage,SOIL,10.088,0.2,3.1,11.8,
 2023,UPH_H5 SOIL,UPH_H5,5,UP,UP,Home,Herbivore,Cage,SOIL,10.496,0.3,3.9,11.8,
 2023,UPH_H5 POPRC (Plant),UPH_H5,5,UP,UP,Home,Herbivore,Cage,POPRC,3.06,0.6,41.7,60.7,
@@ -1025,7 +1027,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,UPH_V2 POPRC (Plant),UPH_V2,2,UP,UP,Home,Vegetation,Cage,POPRC,3.094,1.7,43.1,25,
 2021,P_UPH_V2,UPH_V2,2,UP,UP,Home,Vegetation,Cage,POPRC,1.791,2.1,44.1,20.7,
 2023,UPH_V2 SORU (Plant),UPH_V2,2,UP,UP,Home,Vegetation,Cage,SORU,3.039,2.5,45,17.8,
-2021,S_UPH_V2,UPH_V2,2,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,UPH_V2,2,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
 2023,UPH_V3 SOIL,UPH_V3,3,UP,UP,Home,Vegetation,Cage,SOIL,10.21,0.1,2.3,11.6,
 2021,UPH_V3,UPH_V3,3,UP,UP,Home,Vegetation,Cage,SOIL,10.668,0.2,2.6,11.6,
 2023,UPH_V3 LITTER (Plant),UPH_V3,3,UP,UP,Home,Vegetation,Cage,LITTER,3.028,1,43.4,42.5,
@@ -1035,7 +1037,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,M_UPH_V3,UPH_V3,3,UP,UP,Home,Vegetation,Cage,MISC,1.83,2.3,47.7,20.4,
 2021,P_UPH_V3,UPH_V3,3,UP,UP,Home,Vegetation,Cage,POPRC,1.653,2.4,44.3,17.7,
 2023,UPH_V3 SORU (Plant),UPH_V3,3,UP,UP,Home,Vegetation,Cage,SORU,3.221,2.8,46.5,16.3,
-2021,S_UPH_V3,UPH_V3,3,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,UPH_V3,3,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,UPH_V4,UPH_V4,4,UP,UP,Home,Vegetation,Cage,SOIL,10.081,0.1,1.9,13,
 2023,UPH_V4 SOIL,UPH_V4,4,UP,UP,Home,Vegetation,Cage,SOIL,10.349,0.2,3,12,
 2021,L_UPH_V4,UPH_V4,4,UP,UP,Home,Vegetation,Cage,LITTER,1.891,0.9,42.3,42.5,
@@ -1055,7 +1057,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,UPH_V5 SORU (Plant),UPH_V5,5,UP,UP,Home,Vegetation,Cage,SORU,3.152,2.6,46.1,17.7,
 2023,UPH_V5 MISC (Plant),UPH_V5,5,UP,UP,Home,Vegetation,Cage,MISC,3.276,2.9,47.5,16.3,
 2021,M_UPH_V5,UPH_V5,5,UP,UP,Home,Vegetation,Cage,MISC,1.985,3,47.7,15.4,
-2021,S_UPH_V5,UPH_V5,5,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,UPH_V5,5,UP,UP,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,Defoliated
 2023,UPH_V6 SOIL,UPH_V6,6,UP,UP,Home,Vegetation,Cage,SOIL,10.779,0.2,2.7,11.7,
 2021,UPH_V6,UPH_V6,6,UP,UP,Home,Vegetation,Cage,SOIL,10.627,0.2,2.7,12.2,
 2021,L_UPH_V6,UPH_V6,6,UP,UP,Home,Vegetation,Cage,LITTER,1.931,0.4,45.7,92.5,
@@ -1351,7 +1353,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,YFN_H4 MISC (Plant),YFN_H4,4,YF,UP,North,Herbivore,Cage,MISC,3.244,1.9,45.9,24.1,
 2021,M_YFN_H4,YFN_H4,4,YF,UP,North,Herbivore,Cage,MISC,1.735,3.3,44,13.2,
 2023,YFN_H4 SORU (Plant),YFN_H4,4,YF,UP,North,Herbivore,Cage,SORU,3.457,3.6,84,22.8,
-2021,S_YFN_H4,YFN_H4,4,YF,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,YFN_H4,4,YF,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2021,YFN_H5,YFN_H5,5,YF,UP,North,Herbivore,Cage,SOIL,10.675,0.2,2.8,12.2,
 2023,YFN_H5 SOIL,YFN_H5,5,YF,UP,North,Herbivore,Cage,SOIL,9.873,0.3,3.6,11.9,
 2021,L_YFN_H5,YFN_H5,5,YF,UP,North,Herbivore,Cage,LITTER,1.512,0.6,45.6,71.2,
@@ -1361,7 +1363,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2023,YFN_H5 MISC (Plant),YFN_H5,5,YF,UP,North,Herbivore,Cage,MISC,3.211,2.3,46.4,19.5,
 2021,M_YFN_H5,YFN_H5,5,YF,UP,North,Herbivore,Cage,MISC,1.71,2.7,46.5,16.8,
 2023,YFN_H5 SORU (Plant),YFN_H5,5,YF,UP,North,Herbivore,Cage,SORU,3.128,2.9,47.4,16.2,
-2021,S_YFN_H5,YFN_H5,5,YF,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
+2021,NA,YFN_H5,5,YF,UP,North,Herbivore,Cage,SORU,NA,NA,NA,NA,Defoliated
 2023,YFN_H6 SOIL,YFN_H6,6,YF,UP,North,Herbivore,Cage,SOIL,10.44,0.2,3,11.5,
 2021,YFN_H6,YFN_H6,6,YF,UP,North,Herbivore,Cage,SOIL,10.897,0.2,2.7,12,
 2021,L_YFN_H6,YFN_H6,6,YF,UP,North,Herbivore,Cage,LITTER,1.601,0.6,46.6,70.2,
@@ -1392,3 +1394,38 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,M_YFN_H8,YFN_H8,8,YF,UP,North,Herbivore,Cage,MISC,1.761,2.3,46.1,19.4,
 2023,YFN_H8 SORU (Plant),YFN_H8,8,YF,UP,North,Herbivore,Cage,SORU,2.997,2.5,46.3,17.9,
 2021,P_YFN_H8,YFN_H8,8,YF,UP,North,Herbivore,Cage,POPRC,1.838,3.6,44.8,12.1,
+2023,NA,DCS_H2,2,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,DCS_H4,4,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,DCS_H5,5,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,DCS_H6,6,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,DCS_H7,7,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,DCS_H8,8,DC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,FNH_H5,5,FN,FN,Home,Herbivore,Cage,POPRC,NA,NA,NA,NA,None
+2023,NA,FNH_V2,2,FN,FN,Home,Vegetation,Cage,POPRC,NA,NA,NA,NA,None
+2023,NA,FNS_H1,1,FN,YF,South,Herbivore,Cage,POPRC,NA,NA,NA,NA,None
+2023,NA,FNS_H2,2,FN,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,FNS_H3,3,FN,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,FNS_H4,4,FN,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,FNS_H5,5,FN,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,FNS_H8,8,FN,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,SCS_H4,4,SC,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,UPH_H1,1,UP,UP,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,UPS_H1,1,UP,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,UPS_H3,3,UP,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,UPS_H6,6,UP,YF,South,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFH_H1,1,YF,YF,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFH_H4,4,YF,YF,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFH_H5,5,YF,YF,Home,Herbivore,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFH_V3,3,YF,YF,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFH_V8,8,YF,YF,Home,Vegetation,Cage,SORU,NA,NA,NA,NA,None
+2023,NA,YFN_H1,1,YF,UP,North,Herbivore,Cage,POPRC,NA,1.5,42.8,27.6,Imputed
+2023,NA,UPH_H7,7,UP,UP,Home,Herbivore,Cage,SORU,NA,2.4,45.9,18.7,Imputed
+2023,NA,UPH_H7,7,UP,UP,Home,Herbivore,Cage,POPRC,NA,1.4,42.4,32,Imputed
+2023,NA,UPH_H7,7,UP,UP,Home,Herbivore,Cage,SOIL,NA,0.2,2.8,11.9,Imputed
+2023,NA,UPH_H7,7,UP,UP,Home,Herbivore,Cage,MISC,NA,1.7,44.4,26.4,Imputed
+2023,NA,UPH_H7,7,UP,UP,Home,Herbivore,Cage,LITTER,NA,1.1,42.8,39.5,Imputed
+2023,NA,YFN_H2,2,YF,UP,North,Herbivore,Cage,SORU,NA,2.6,50.9,19.1,Imputed
+2023,NA,YFN_H2,2,YF,UP,North,Herbivore,Cage,POPRC,NA,1.5,42.8,27.6,Imputed
+2023,NA,YFN_H2,2,YF,UP,North,Herbivore,Cage,LITTER,NA,1.2,44.1,37.8,Imputed
+2023,NA,YFN_H2,2,YF,UP,North,Herbivore,Cage,MISC,NA,1.7,45.1,26.9,Imputed
+2023,NA,YFN_H2,2,YF,UP,North,Herbivore,Cage,SOIL,NA,0.2,3.2,12.3,Imputed
