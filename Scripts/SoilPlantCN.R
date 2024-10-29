@@ -2,15 +2,242 @@
 
 library(tidyverse)
 library(ggforce)
+library(RColorBrewer)
+library(paletteer)
 
 CNdata <- read.csv("Data/Elements/CN_Tidy.csv")
+
+CNdata <- CNdata %>% 
+  mutate(
+    PercentN = ifelse(Note %in% c("None", "Defoliated"), 0, PercentN),
+    PercentC = ifelse(Note %in% c("None", "Defoliated"), 0, PercentC)
+  )
+
+CNdata <- CNdata %>%
+  rename(Sample_ID = CageID) %>%
+  dplyr::select(Sample_ID, Year, Population, Site, PercentN, PercentC, SampleType) %>%
+  pivot_wider(names_from = SampleType, values_from = c(PercentN, PercentC))
+
+
+
+
+## Plots for Matthew ----
+
+means_data <- CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, SampleType) %>% 
+  summarise(mean_PercentN = mean(PercentN, na.rm = TRUE)) %>% 
+  ungroup()
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  ggplot(aes(x = Site, y = PercentN, fill = Site)) + 
+  geom_boxplot(outliers = FALSE) +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  scale_fill_paletteer_d("ggsci::alternating_igv") +
+  labs(title = "Plant Types %N 2021",
+       x = "Type",
+       y = "%N") +
+  facet_wrap(~SampleType) +  
+  geom_text(data = means_data, aes(x = Site, y = 0.5, label = round(mean_PercentN, 1)), 
+                                       position = position_dodge(width = 0.75), size = 3, color = "black")
+
+
+
+means_data <- CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, SampleType) %>% 
+  summarise(mean_PercentC = mean(PercentC, na.rm = TRUE)) %>% 
+  ungroup()
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  filter(PercentC < 60) %>%
+  filter(PercentC > 20) %>% 
+  ggplot(aes(x = Site, y = PercentC, fill = Site)) + 
+  geom_boxplot(outliers = FALSE) +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  scale_fill_paletteer_d("ggsci::alternating_igv") +
+  labs(title = "Plant Types %C 2021",
+       x = "Type",
+       y = "%C") +
+  facet_wrap(~SampleType) +
+  geom_text(data = means_data, aes(x = Site, y = 35, label = round(mean_PercentC, 1)), 
+            position = position_dodge(width = 0.75), size = 3, color = "black")
+
+means_data <- CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, SampleType) %>% 
+  summarise(mean_RatioCN = mean(RatioCN, na.rm = TRUE)) %>% 
+  ungroup()
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  filter(PercentC < 60) %>%
+  filter(PercentC > 20) %>% 
+  ggplot(aes(x = Site, y = RatioCN, fill = Site)) + 
+  geom_boxplot(outliers = FALSE) +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  scale_fill_paletteer_d("ggsci::alternating_igv") +
+  labs(title = "Plant Types RatioCN 2021",
+       x = "Type",
+       y = "RatioCN") +
+  facet_wrap(~SampleType) +
+  facet_wrap(~SampleType) +
+  geom_text(data = means_data, aes(x = Site, y = 7, label = round(mean_RatioCN, 1)), 
+            position = position_dodge(width = 0.75), size = 3, color = "black")
+
+
+
+means_data <- CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, CageTreatment, SampleType) %>% 
+  summarise(mean_PercentC = mean(PercentC, na.rm = TRUE)) %>% 
+  ungroup()
+
+
+CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  filter(PercentC < 80) %>% 
+  mutate(CageTreatment = factor(CageTreatment, levels = c("Vegetation", "Herbivore"))) %>%  
+  ggplot(aes(x = Site, y = PercentC, fill = CageTreatment)) + 
+  geom_boxplot(outliers = FALSE) +
+  scale_fill_paletteer_d("ggthemes::wsj_red_green") +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  labs(title = "Plant Types %C by Treatment, 2023",
+       x = "Type",
+       y = "%C") +
+  facet_wrap(~SampleType) +
+  geom_text(data = means_data, aes(x = Site, y = 37, label = round(mean_PercentC, 1)), 
+            position = position_dodge(width = 0.75), size = 3, color = "black")
+
+
+
+
+
+means_data <- CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, CageTreatment, SampleType) %>% 
+  summarise(mean_PercentN = mean(PercentN, na.rm = TRUE)) %>% 
+  ungroup()
+
+
+CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  mutate(CageTreatment = factor(CageTreatment, levels = c("Vegetation", "Herbivore"))) %>%  
+  ggplot(aes(x = Site, y = PercentN, fill = CageTreatment)) + 
+  geom_boxplot(outliers = FALSE) +
+  scale_fill_paletteer_d("ggthemes::wsj_red_green") +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  labs(title = "Plant Types %N by Treatment, 2023",
+       x = "Type",
+       y = "%N") +
+  facet_wrap(~SampleType) + 
+  geom_text(data = means_data, aes(x = Site, y = .4, label = round(mean_PercentN, 1)), 
+            position = position_dodge(width = 0.75), size = 3, color = "black")
+
+
+
+means_data <- CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  filter(RatioCN < 60) %>% 
+  group_by(Site, CageTreatment, SampleType) %>% 
+  summarise(mean_RatioCN = mean(RatioCN, na.rm = TRUE)) %>% 
+  ungroup()
+
+CNdata %>% 
+  filter(Year == 2023) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  filter(RatioCN < 60) %>% 
+  mutate(CageTreatment = factor(CageTreatment, levels = c("Vegetation", "Herbivore"))) %>%  
+  ggplot(aes(x = Site, y = RatioCN, fill = CageTreatment)) + 
+  geom_boxplot(outliers = FALSE) +
+  scale_fill_paletteer_d("ggthemes::wsj_red_green") +
+  geom_jitter(size = 1, width = .1) +
+  theme_classic() +
+  labs(title = "Plant Types RatioCN by Treatment, 2023",
+       x = "Type",
+       y = "%RatioCN") +
+  facet_wrap(~SampleType) +
+  geom_text(data = means_data, aes(x = Site, y = 7, label = round(mean_RatioCN, 1)), 
+            position = position_dodge(width = 0.75), size = 3, color = "black")
+
+
+
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site) %>% 
+  summarise(mean_PercentN = mean(PercentN, na.rm = TRUE))
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType %in% c("SORU", "POPRC")) %>% 
+  group_by(Site, SampleType) %>% 
+  summarise(mean_PercentC = mean(PercentC, na.rm = TRUE))
+
+CNdata %>% 
+  filter(Year == 2021) %>% 
+  filter(SampleLevel == "Cage") %>% 
+  filter(Site %in% c("YF", "UP")) %>% 
+  filter(SampleType == "Soil") %>% 
+  mean(PercentN)
+
+
+
+
+
 
 ## DataViz ----
 
 ### Soil ----
 CNdata %>%
-  filter(SampleLevel == "Site", SampleType == "SOIL") %>% 
-  mutate(Site = factor(Site, levels = c("FN", "YF", "SC", "HF", "DC", "SP", "MC", "UP"))) %>% 
+  filter(SampleLevel == "Cage", SampleType == "SOIL") %>% 
   ggplot(aes(x = Site, y = RatioCN)) +
   geom_point(size = 3) +
   labs(title = "Soil RatioCN Across Sites",
@@ -378,3 +605,4 @@ PercentN_change %>%
        x = "Population",
        y = "%N") +
   theme_minimal()
+
