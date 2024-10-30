@@ -19,7 +19,7 @@ dag <- dagify(
   SIR ~ SoilN + SOM, #y
   Decomp ~ SIR + SoilC + LitterN, #y
   PlantDiversity ~ SoilC + SOM + SORUbiomass, #y (removed SoilN for multicollinearity)
-  Nmin ~ SoilN + SOM + SIR #y
+  Nmin ~ SoilN + SIR #y (removed SOM for model fit)
 )
 
 
@@ -60,7 +60,8 @@ sir_data <- SIR_final_data %>%
 
 n_min_data <- N_min_full_data %>%
   rename(Sample_ID = Sample.ID) %>%
-  dplyr::select(Sample_ID, Year, Population, Site, `Overall mineralization rate`)
+  rename(Overall_mineralization_rate = `Overall mineralization rate`) %>% 
+  dplyr::select(Sample_ID, Year, Population, Site, Overall_mineralization_rate)
 
 veg_biomass_data <- functional_groups_wide %>%
   rename(Sample_ID = Cage.ID) %>%
@@ -82,7 +83,7 @@ som_data <- SOM_data %>%
 response_vars <- c(
   "MassLoss",
   "CO2CperHourperg",
-  "Overall mineralization rate",
+  "Overall_mineralization_rate",
   "SORU_Biomass",
   "POPRC_Biomass",
   "MISC_Biomass",
@@ -113,10 +114,8 @@ combined_data <- decomp_data %>%
   mutate(Site = coalesce(Site.x, Site.y, Site)) %>%
   # Conditionally mutate PopulationType based on Treatment
   mutate(PopulationType = case_when(
-    Treatment == "Herbivore" & Population %in% c("YF", "DC", "SC") ~ "Physiological",
-    Treatment == "Herbivore" & Population %in% c("FN", "UP") ~ "Behavioral",
-    Treatment == "Vegetation" ~ NA_character_
-  ))
+    Population %in% c("YF", "DC", "SC") ~ "Physiological",
+    Population %in% c("FN", "UP") ~ "Behavioral"))
 
 
 # Create final_data_year with variables spread by Year
@@ -184,6 +183,17 @@ simulation_output <- simulateResiduals(fittedModel = SORU_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # fine
 testZeroInflation(simulation_output) # fine
+
+##### Random effects model comparison ---- 
+SORU_model_noRE <- lm(SORU_Biomass_2023 ~ 
+                        Treatment +
+                        PopulationType +
+                        SORU_Biomass_2021,
+                      data = final_data_year)
+
+anova(SORU_model, SORU_model_noRE)
+VarCorr(SORU_model)
+# keep random effects
 
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
@@ -279,6 +289,17 @@ plot(simulation_output) # not great
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # good
 
+##### Random effects model comparison ---- 
+POPRC_model_noRE <- lm(POPRC_Biomass_2023 ~ 
+                        Treatment +
+                        PopulationType +
+                        POPRC_Biomass_2021,
+                      data = final_data_year)
+
+anova(POPRC_model, POPRC_model_noRE)
+VarCorr(POPRC_model)
+# keep random effects
+
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
@@ -367,9 +388,19 @@ print(vif_values) # good
 
 plot(SORUN_model) # okay
 simulation_output <- simulateResiduals(fittedModel = SORUN_model)
-plot(simulation_output) # good
+plot(simulation_output) # not good
 testDispersion(simulation_output) # good
-testZeroInflation(simulation_output) # good
+testZeroInflation(simulation_output) # zero-inflated
+
+##### Random effects model comparison ---- 
+SORUN_model_noRE <- lm(PercentN_SORU_2023 ~ 
+                         SORU_Biomass_2023 + 
+                         PercentN_SORU_2021,
+                       data = final_data_year)
+
+anova(SORUN_model, SORUN_model_noRE)
+VarCorr(POPRC_model)
+# keep random effects
 
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
@@ -385,41 +416,7 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) ## breaks: solved below
-
-# given the diagnostics, non-parametric boostrapping is NOT necessary
-# but, with all other models using non-parametric bootstrapping, let's try for consistency
-
-## Diagnose boundary(singular) error
-
-isSingular(SORUN_model) # not an issue with the original model
-summary(SORUN_model) 
-VarCorr(SORUN_model) # variance is small, which is likely the culprit
-
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(PercentN_SORU_2023 ~ 
-                SORU_Biomass_2023 + 
-                PercentN_SORU_2021 + 
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
+boot_model <- boot(final_data_year, boot_fun, R = 1000)
 
 
 
@@ -475,6 +472,7 @@ print(boot_summary) # good
 
 
 
+
 #### SORU %C ----
 SORUC_model <- lmer(PercentC_SORU_2023 ~ 
                     SORU_Biomass_2023 +
@@ -496,7 +494,19 @@ plot(SORUC_model) # okay
 simulation_output <- simulateResiduals(fittedModel = SORUC_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # fine
-testZeroInflation(simulation_output) # fine
+testZeroInflation(simulation_output) # zero-inflated
+
+
+##### Random effects model comparison ---- 
+SORUC_model_noRE <- lm(PercentC_SORU_2023 ~ 
+                         SORU_Biomass_2023 + 
+                         PercentC_SORU_2021,
+                       data = final_data_year)
+
+anova(SORUC_model, SORUC_model_noRE)
+VarCorr(SORUC_model)
+# keep random effects
+
 
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
@@ -512,42 +522,7 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved below
-
-# given the diagnostics, non-parametric boostrapping is necessary
-
-## Diagnose boundary(singular) error
-
-isSingular(SORUC_model) # not an issue with the original model
-summary(SORUC_model) 
-VarCorr(SORUC_model) # need to retain random effects
-
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(PercentC_SORU_2023 ~ 
-                SORU_Biomass_2023 + 
-                PercentC_SORU_2021 + 
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
+boot_model <- boot(final_data_year, boot_fun, R = 1000)
 
 # 1. Extract original confidence intervals
 original_ci <- confint(SORUC_model, parm = names(fixef(SORUC_model)), level = 0.95)
@@ -599,6 +574,10 @@ print(boot_summary)
 
 
 
+
+
+
+
 #### POPRC %C ----
 POPRCC_model <- lmer(PercentC_POPRC_2023 ~ 
                     POPRC_Biomass_2023 +
@@ -620,38 +599,64 @@ plot(POPRCC_model) # not great
 simulation_output <- simulateResiduals(fittedModel = POPRCC_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # fine
-testZeroInflation(simulation_output) # fine
+testZeroInflation(simulation_output) #zero-inflated
 
-##### Non-parametric bootstrapping ----
+##### Random effects model comparison ---- 
+POPRCC_model_noRE <- lm(PercentC_POPRC_2023 ~ 
+                          POPRC_Biomass_2023 + 
+                          PercentC_POPRC_2021,
+                        data = final_data_year)
+
+anova(POPRCC_model, POPRCC_model_noRE)
+VarCorr(POPRCC_model)
+# ! drop random effects
+
+POPRCC_model <- lm(PercentC_POPRC_2023 ~ 
+                       POPRC_Biomass_2023 +
+                       PercentC_POPRC_2021,
+                     data = final_data_year)
+summary(POPRCC_model)
+
+##### Check assumptions (LM) ----
+plot(POPRCC_model) # not great
+simulation_output <- simulateResiduals(fittedModel = POPRCC_model)
+plot(simulation_output) # not great
+testDispersion(simulation_output) # fine
+testZeroInflation(simulation_output) # zero-inflated
+
+
+
+##### Non-parametric bootstrapping for lm ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
-  mod <- lmer(PercentC_POPRC_2023 ~ 
-                POPRC_Biomass_2023 + 
-                PercentC_POPRC_2021 + 
-                (1 | Site), 
-              data = d)
-  return(fixef(mod))
+  mod <- lm(PercentC_POPRC_2023 ~ 
+              POPRC_Biomass_2023 + 
+              PercentC_POPRC_2021, 
+            data = d)
+  return(coef(mod))  # return coefficients for lm objects
 }
 
+# Set seed for reproducibility
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000)
+# Perform bootstrapping with 1000 resamples
+boot_model <- boot(final_data_year, boot_fun, R = 1000) 
 
-# 1. Extract original confidence intervals
-original_ci <- confint(POPRCC_model, parm = names(fixef(POPRCC_model)), level = 0.95)
+# 1. Extract original confidence intervals for lm model using `coef()`
+original_ci <- confint(POPRCC_model, parm = names(coef(POPRCC_model)), level = 0.95)
 original_ci <- as.data.frame(original_ci)
 colnames(original_ci) <- c("Original_Lower", "Original_Upper")
 
 # 2. Initialize data frame
 boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(POPRCC_model)),
+  Fixed_Effect = names(coef(POPRCC_model)),
   Boot_Lower = NA,
   Boot_Upper = NA
 )
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(POPRCC_model))) {
+for (i in seq_along(coef(POPRCC_model))) {
   boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
@@ -670,65 +675,131 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
   warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
 }
 
-# 5. Compare bootstrapped estimates with original fixed effect estimates
+# 5. Compare bootstrapped estimates with original fixed effect estimates using `coef()` for lm objects
 boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(POPRCC_model)),
-  Original_Estimate = fixef(POPRCC_model),
+  Fixed_Effect = names(coef(POPRCC_model)),
+  Original_Estimate = coef(POPRCC_model),
   Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(POPRCC_model) - apply(boot_model$t, 2, median)
-)
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
-
-# 1. Extract original confidence intervals
-original_ci <- confint(SoilC_model, parm = names(fixef(SoilC_model)), level = 0.95)
-original_ci <- as.data.frame(original_ci)
-colnames(original_ci) <- c("Original_Lower", "Original_Upper")
-
-# 2. Initialize data frame
-boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(SoilC_model)),
-  Boot_Lower = NA,
-  Boot_Upper = NA
-)
-
-# 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(SoilC_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
-    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
-    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
-  } else {
-    # error handling
-    boot_ci_table$Boot_Lower[i] <- NA
-    boot_ci_table$Boot_Upper[i] <- NA
-  }
-}
-
-# 4. Error handling: Ensure that both tables have the same number of rows
-if (nrow(original_ci) == nrow(boot_ci_table)) {
-  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
-} else {
-  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
-}
-
-# 5. Compare bootstrapped estimates with original fixed effect estimates
-boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(SoilC_model)),
-  Original_Estimate = fixef(SoilC_model),
-  Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(SoilC_model) - apply(boot_model$t, 2, median)
+  Difference = coef(POPRCC_model) - apply(boot_model$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
-print(ci_comparison) # good
+print(ci_comparison) 
 
 # Print bootstrapped fixed effects comparison
-print(boot_summary) # good
+print(boot_summary) 
 
+
+
+
+#### POPRC %N ----
+POPRCN_model <- lmer(PercentN_POPRC_2023 ~ 
+                       POPRC_Biomass_2023 +
+                       PercentN_POPRC_2021 +
+                       (1 | Site), 
+                     data = final_data_year)
+summary(POPRCN_model)
+
+##### Check assumptions ----
+fixed_model <- lm(PercentN_POPRC_2023 ~ 
+                    POPRC_Biomass_2023 + 
+                    PercentN_POPRC_2021,
+                  data = final_data_year)
+
+vif_values <- vif(fixed_model)
+print(vif_values) # good
+
+plot(POPRCN_model) # good
+simulation_output <- simulateResiduals(fittedModel = POPRCN_model)
+plot(simulation_output) # good
+testDispersion(simulation_output) # good
+testZeroInflation(simulation_output) # zero-inflated
+
+
+##### Random effects model comparison ---- 
+POPRCN_model_noRE <- lm(PercentN_POPRC_2023 ~ 
+                          POPRC_Biomass_2023 + 
+                          PercentN_POPRC_2021,
+                        data = final_data_year)
+
+anova(POPRCN_model, POPRCN_model_noRE)
+VarCorr(POPRCN_model)
+# ! drop random effects
+
+
+POPRCN_model <- POPRCN_model_noRE
+
+summary(POPRCN_model)
+
+##### Check assumptions (LM) ----
+plot(POPRCN_model) # good
+simulation_output <- simulateResiduals(fittedModel = POPRCN_model)
+plot(simulation_output) # good
+testDispersion(simulation_output) # good
+testZeroInflation(simulation_output) # zero-inflated
+
+##### Non-parametric bootstrapping for lm ----
+# Function for bootstrapping
+boot_fun <- function(data, indices) {
+  d <- data[indices, ]  # resample
+  mod <- lm(PercentN_POPRC_2023 ~ 
+              POPRC_Biomass_2023 + 
+              PercentN_POPRC_2021,
+            data = d)
+  return(coef(mod))  # return coefficients for lm objects
+}
+
+# Set seed for reproducibility
+set.seed(1231)
+
+# Perform bootstrapping with 1000 resamples
+boot_model <- boot(final_data_year, boot_fun, R = 1000) 
+
+# 1. Extract original confidence intervals for lm model using `coef()`
+original_ci <- confint(POPRCN_model, parm = names(coef(POPRCN_model)), level = 0.95)
+original_ci <- as.data.frame(original_ci)
+colnames(original_ci) <- c("Original_Lower", "Original_Upper")
+
+# 2. Initialize data frame
+boot_ci_table <- data.frame(
+  Fixed_Effect = names(coef(POPRCN_model)),
+  Boot_Lower = NA,
+  Boot_Upper = NA
+)
+
+# 3. Iterate over fixed effects to get bootstrapped CIs
+for (i in seq_along(coef(POPRCN_model))) {
+  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
+    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
+    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
+  } else {
+    # error handling
+    boot_ci_table$Boot_Lower[i] <- NA
+    boot_ci_table$Boot_Upper[i] <- NA
+  }
+}
+
+# 4. Error handling: Ensure that both tables have the same number of rows
+if (nrow(original_ci) == nrow(boot_ci_table)) {
+  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
+} else {
+  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
+}
+
+# 5. Compare bootstrapped estimates with original fixed effect estimates using `coef()` for lm objects
+boot_summary <- data.frame(
+  Fixed_Effect = names(coef(POPRCN_model)),
+  Original_Estimate = coef(POPRCN_model),
+  Bootstrapped_Median = apply(boot_model$t, 2, median),
+  Difference = coef(POPRCN_model) - apply(boot_model$t, 2, median)
+)
+
+# Print bootstrapped CI comparison
+print(ci_comparison) 
+
+# Print bootstrapped fixed effects comparison
+print(boot_summary) 
 
 
 
@@ -767,6 +838,19 @@ plot(simulation_output) # bad
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # good
 
+
+##### Random effects model comparison ---- 
+SoilN_model_noRE <- lm(PercentN_SOIL_2023 ~ 
+                         Treatment + 
+                         PopulationType + 
+                         PercentN_LITTER_2023 + 
+                         PercentN_SOIL_2021,
+                       data = final_data_year)
+
+anova(SoilN_model, SoilN_model_noRE)
+VarCorr(SoilN_model)
+# keep random effects
+
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
@@ -783,7 +867,42 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000)
+boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved below
+# convergence error
+
+isSingular(SoilN_model) # not an issue with the original model
+summary(SoilN_model) 
+VarCorr(SoilN_model) # site variance is small, which is likely the culprit
+
+# Modify bootstrapping with relaxed tolerance for small variances
+boot_fun_stratified <- function(data, indices) {
+  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
+    resample_indices <- sample(nrow(subset), replace = TRUE)
+    subset[resample_indices, ]
+  }))
+  
+  
+  # Fit model on resampled data with small variance allowed
+  mod <- lmer(PercentN_SOIL_2023 ~ 
+                Treatment + 
+                PopulationType + 
+                PercentN_LITTER_2023 + 
+                PercentN_SOIL_2021 +
+                (1 | Site), 
+              data = resampled_data,
+              control = lmerControl(check.nlev.gtr.1 = "ignore", 
+                                    check.conv.singular = "ignore", 
+                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
+  
+  return(fixef(mod))  # Return fixed effects
+}
+
+
+# Bootstrapping with adjusted tolerance
+set.seed(1231)
+boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
+
+
 
 # 1. Extract original confidence intervals
 original_ci <- confint(SoilN_model, parm = names(fixef(SoilN_model)), level = 0.95)
@@ -799,7 +918,7 @@ boot_ci_table <- data.frame(
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
 for (i in seq_along(fixef(SoilN_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+  boot_ci_i <- boot.ci(boot_model_stratified, type = "perc", index = i)  # Use the correct boot object
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
     boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
@@ -821,8 +940,8 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
 boot_summary <- data.frame(
   Fixed_Effect = names(fixef(SoilN_model)),
   Original_Estimate = fixef(SoilN_model),
-  Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(SoilN_model) - apply(boot_model$t, 2, median)
+  Bootstrapped_Median = apply(boot_model_stratified$t, 2, median),  # Use the correct boot object
+  Difference = fixef(SoilN_model) - apply(boot_model_stratified$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
@@ -831,6 +950,160 @@ print(ci_comparison)
 # Print bootstrapped fixed effects comparison
 print(boot_summary)
 
+
+
+
+
+#### SoilC ----
+
+SoilC_model <- lmer(PercentC_SOIL_2023 ~ 
+                      Treatment + 
+                      PopulationType + 
+                      SORU_Biomass_2023 +
+                      PercentC_LITTER_2023 +
+                      CO2CperHourperg_2023 +
+                      PercentC_SOIL_2021 + 
+                      (1 | Site), 
+                    data = final_data_year)
+summary(SoilC_model)
+
+##### Check assumptions ----
+fixed_model <- lm(PercentC_SOIL_2023 ~ 
+                    Treatment + 
+                    PopulationType +
+                    SORU_Biomass_2023 +
+                    PercentC_LITTER_2023 +
+                    CO2CperHourperg_2023 +
+                    PercentC_SOIL_2021,
+                  data = final_data_year)
+vif_values <- vif(fixed_model)
+print(vif_values) # good
+
+plot(SoilC_model) # bad
+simulation_output <- simulateResiduals(fittedModel = SoilC_model)
+plot(simulation_output) # bad
+testDispersion(simulation_output) # good
+testZeroInflation(simulation_output) # good
+
+
+##### Random effects model comparison ---- 
+SoilC_model_noRE <- lm(PercentC_SOIL_2023 ~ 
+                         Treatment + 
+                         PopulationType +
+                         SORU_Biomass_2023 +
+                         PercentC_LITTER_2023 +
+                         CO2CperHourperg_2023 +
+                         PercentC_SOIL_2021,
+                       data = final_data_year)
+
+anova(SoilC_model, SoilC_model_noRE)
+VarCorr(SoilC_model)
+# keep random effects
+
+##### Non-parametric bootstrapping ----
+# Function for bootstrapping
+boot_fun <- function(data, indices) {
+  d <- data[indices, ]  # resample
+  mod <- lmer(PercentC_SOIL_2023 ~ 
+                Treatment + 
+                PopulationType +
+                SORU_Biomass_2023 +
+                PercentC_LITTER_2023 +
+                CO2CperHourperg_2023 +
+                PercentC_SOIL_2021 +
+                (1 | Site), 
+              data = d)
+  return(fixef(mod))
+}
+
+set.seed(1231)
+
+boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved below
+
+# given diagnostics, boostrapping IS necessary
+
+## Diagnose boundary(singular) error
+
+isSingular(SoilC_model) # not an issue with the original model
+summary(SoilC_model) 
+VarCorr(SoilC_model) # super small random effects variance; likely the culprit
+
+
+# Modify bootstrapping with relaxed tolerance for small variances
+boot_fun_stratified <- function(data, indices) {
+  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
+    resample_indices <- sample(nrow(subset), replace = TRUE)
+    subset[resample_indices, ]
+  }))
+  
+  # Fit model on resampled data with small variance allowed
+  mod <- lmer(PercentC_SOIL_2023 ~ 
+                Treatment + 
+                PopulationType +
+                SORU_Biomass_2023 +
+                PercentC_LITTER_2023 +
+                CO2CperHourperg_2023 +
+                PercentC_SOIL_2021 +
+                (1 | Site), 
+              data = resampled_data,
+              control = lmerControl(check.nlev.gtr.1 = "ignore", 
+                                    check.conv.singular = "ignore", 
+                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
+  
+  return(fixef(mod))  # Return fixed effects
+}
+
+# Bootstrapping with adjusted tolerance
+set.seed(1231)
+boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
+
+
+
+# 1. Extract original confidence intervals
+original_ci <- confint(SoilC_model, parm = names(fixef(SoilC_model)), level = 0.95)
+original_ci <- as.data.frame(original_ci)
+colnames(original_ci) <- c("Original_Lower", "Original_Upper")
+
+# 2. Initialize data frame
+boot_ci_table <- data.frame(
+  Fixed_Effect = names(fixef(SoilC_model)),
+  Boot_Lower = NA,
+  Boot_Upper = NA
+)
+
+# 3. Iterate over fixed effects to get bootstrapped CIs
+for (i in seq_along(fixef(SoilC_model))) {
+  boot_ci_i <- boot.ci(boot_model_stratified, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
+    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
+    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
+  } else {
+    # error handling
+    boot_ci_table$Boot_Lower[i] <- NA
+    boot_ci_table$Boot_Upper[i] <- NA
+  }
+}
+
+# 4. Error handling: Ensure that both tables have the same number of rows
+if (nrow(original_ci) == nrow(boot_ci_table)) {
+  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
+} else {
+  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
+}
+
+# 5. Compare bootstrapped estimates with original fixed effect estimates
+boot_summary <- data.frame(
+  Fixed_Effect = names(fixef(SoilC_model)),
+  Original_Estimate = fixef(SoilC_model),
+  Bootstrapped_Median = apply(boot_model_stratified$t, 2, median),
+  Difference = fixef(SoilC_model) - apply(boot_model_stratified$t, 2, median)
+)
+
+# Print bootstrapped CI comparison
+print(ci_comparison)
+
+# Print bootstrapped fixed effects comparison
+print(boot_summary)
 
 
 
@@ -860,6 +1133,18 @@ simulation_output <- simulateResiduals(fittedModel = SIR_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # good 
 testZeroInflation(simulation_output) # good
+
+
+##### Random effects model comparison ---- 
+SIR_model_noRE <- lm(CO2CperHourperg_2023 ~ 
+                      PercentN_SOIL_2023 + 
+                      average_SOM_2021 +
+                      CO2CperHourperg_2021,
+                    data = final_data_year)
+
+anova(SIR_model, SIR_model_noRE)
+VarCorr(SIR_model)
+# keep random effects
 
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
@@ -953,417 +1238,63 @@ plot(simulation_output) # not great
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # good
 
-##### Non-parametric bootstrapping ----
-# Function for bootstrapping
-boot_fun <- function(data, indices) {
-  d <- data[indices, ]  # resample
-  mod <- lmer(MassLoss_2023 ~ 
-                CO2CperHourperg_2023 + 
-                PercentC_SOIL_2023 +
-                PercentN_LITTER_2023 +
-                MassLoss_2021 +
-                (1 | Site), 
-              data = d)
-  return(fixef(mod))
-}
 
-set.seed(1231)
+##### Random effects model comparison ---- 
+Decomposition_model_noRE <- lm(MassLoss_2023 ~ 
+                                 CO2CperHourperg_2023 + 
+                                 PercentC_SOIL_2023 +
+                                 PercentN_LITTER_2023 +
+                                 MassLoss_2021,
+                               data = final_data_year)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved
+anova(Decomposition_model, Decomposition_model_noRE)
+VarCorr(Decomposition_model)
+# ! drop random effects
 
-# given diagnostics, boostrapping IS necessary
+Decomposition_model <- Decomposition_model_noRE
 
-## Diagnose boundary(singular) error
+summary(Decomposition_model_noRE)
 
-isSingular(Decomposition_model) # not an issue with the original model
-summary(Decomposition_model) 
-VarCorr(Decomposition_model) # super small random effects variance; likely the culprit
-
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(MassLoss_2023 ~ 
-                CO2CperHourperg_2023 + 
-                PercentC_SOIL_2023 + 
-                PercentN_LITTER_2023 +
-                MassLoss_2021 +
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
-
-
-# 1. Extract original confidence intervals
-original_ci <- confint(Decomposition_model, parm = names(fixef(Decomposition_model)), level = 0.95)
-original_ci <- as.data.frame(original_ci)
-colnames(original_ci) <- c("Original_Lower", "Original_Upper")
-
-# 2. Initialize data frame
-boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(Decomposition_model)),
-  Boot_Lower = NA,
-  Boot_Upper = NA
-)
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
-
-# 1. Extract original confidence intervals
-original_ci <- confint(SoilC_model, parm = names(fixef(SoilC_model)), level = 0.95)
-original_ci <- as.data.frame(original_ci)
-colnames(original_ci) <- c("Original_Lower", "Original_Upper")
-
-# 2. Initialize data frame
-boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(SoilC_model)),
-  Boot_Lower = NA,
-  Boot_Upper = NA
-)
-
-# 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(SoilC_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
-    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
-    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
-  } else {
-    # error handling
-    boot_ci_table$Boot_Lower[i] <- NA
-    boot_ci_table$Boot_Upper[i] <- NA
-  }
-}
-
-# 4. Error handling: Ensure that both tables have the same number of rows
-if (nrow(original_ci) == nrow(boot_ci_table)) {
-  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
-} else {
-  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
-}
-
-# 5. Compare bootstrapped estimates with original fixed effect estimates
-boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(SoilC_model)),
-  Original_Estimate = fixef(SoilC_model),
-  Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(SoilC_model) - apply(boot_model$t, 2, median)
-)
-
-# Print bootstrapped CI comparison
-print(ci_comparison) # good
-
-# Print bootstrapped fixed effects comparison
-print(boot_summary) # good
-
-
-
-
-
-
-
-
-
-
-
-
-#### SoilN ----
-
-SoilN_model <- lmer(PercentN_SOIL_2023 ~ 
-                      Treatment + 
-                      PopulationType + 
-                      PercentN_LITTER_2023 + 
-                      PercentN_SOIL_2021 + 
-                      (1 | Site), 
-                    data = final_data_year)
-summary(SoilN_model)
-
-##### Check assumptions ----
-fixed_model <- lm(PercentN_SOIL_2023 ~ 
-                    Treatment + 
-                    PopulationType + 
-                    PercentN_LITTER_2023 + 
-                    PercentN_SOIL_2021,
-                  data = final_data_year)
-vif_values <- vif(fixed_model)
-print(vif_values) # good
-
-plot(SoilN_model) # bad
-simulation_output <- simulateResiduals(fittedModel = SoilN_model)
-plot(simulation_output) # bad
-testDispersion(simulation_output) # good
-testZeroInflation(simulation_output) # good
-
-##### Non-parametric bootstrapping ----
-# Function for bootstrapping
-boot_fun <- function(data, indices) {
-  d <- data[indices, ]  # resample
-  mod <- lmer(PercentN_SOIL_2023 ~ 
-                Treatment + 
-                PopulationType + 
-                PercentN_LITTER_2023 + 
-                PercentN_SOIL_2021 +
-                (1 | Site), 
-              data = d)
-  return(fixef(mod))
-}
-
-set.seed(1231)
-
-boot_model <- boot(final_data_year, boot_fun, R = 1000)
-
-# 1. Extract original confidence intervals
-original_ci <- confint(SoilN_model, parm = names(fixef(SoilN_model)), level = 0.95)
-original_ci <- as.data.frame(original_ci)
-colnames(original_ci) <- c("Original_Lower", "Original_Upper")
-
-# 2. Initialize data frame
-boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(SoilN_model)),
-  Boot_Lower = NA,
-  Boot_Upper = NA
-)
-
-# 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(SoilN_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
-    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
-    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
-  } else {
-    # error handling
-    boot_ci_table$Boot_Lower[i] <- NA
-    boot_ci_table$Boot_Upper[i] <- NA
-  }
-}
-
-# 4. Error handling: Ensure that both tables have the same number of rows
-if (nrow(original_ci) == nrow(boot_ci_table)) {
-  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
-} else {
-  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
-}
-
-# 5. Compare bootstrapped estimates with original fixed effect estimates
-boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(SoilN_model)),
-  Original_Estimate = fixef(SoilN_model),
-  Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(SoilN_model) - apply(boot_model$t, 2, median)
-)
-
-# Print bootstrapped CI comparison
-print(ci_comparison)
-
-# Print bootstrapped fixed effects comparison
-print(boot_summary)
-
-
-
-
-
-
-
-#### SIR ----
-SIR_model <- lmer(CO2CperHourperg_2023 ~ 
-                    PercentN_SOIL_2023 + 
-                    average_SOM_2021 +
-                    CO2CperHourperg_2021 +
-                    (1 | Site), 
-                  data = final_data_year)
-summary(SIR_model)
-
-##### Check assumptions ----
-fixed_model <- lm(CO2CperHourperg_2023 ~ 
-                    PercentN_SOIL_2023 + 
-                    average_SOM_2021 +
-                    CO2CperHourperg_2021,
-                  data = final_data_year)
-vif_values <- vif(fixed_model)
-print(vif_values) # good
-
-plot(SIR_model) # okay
-simulation_output <- simulateResiduals(fittedModel = SIR_model)
-plot(simulation_output) # not great
-testDispersion(simulation_output) # good 
-testZeroInflation(simulation_output) # good
-
-##### Non-parametric bootstrapping ----
-# Function for bootstrapping
-boot_fun <- function(data, indices) {
-  d <- data[indices, ]  # resample
-  mod <- lmer(CO2CperHourperg_2023 ~ 
-                PercentN_SOIL_2023 + 
-                average_SOM_2021 +
-                CO2CperHourperg_2021 +
-                (1 | Site), 
-              data = d)
-  return(fixef(mod))
-}
-
-set.seed(1231)
-
-boot_model <- boot(final_data_year, boot_fun, R = 1000)
-
-# 1. Extract original confidence intervals
-original_ci <- confint(SIR_model, parm = names(fixef(SIR_model)), level = 0.95)
-original_ci <- as.data.frame(original_ci)
-colnames(original_ci) <- c("Original_Lower", "Original_Upper")
-
-# 2. Initialize data frame
-boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(SIR_model)),
-  Boot_Lower = NA,
-  Boot_Upper = NA
-)
-
-# 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(SIR_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
-    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
-    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
-  } else {
-    # error handling
-    boot_ci_table$Boot_Lower[i] <- NA
-    boot_ci_table$Boot_Upper[i] <- NA
-  }
-}
-
-# 4. Error handling: Ensure that both tables have the same number of rows
-if (nrow(original_ci) == nrow(boot_ci_table)) {
-  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
-} else {
-  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
-}
-
-# 5. Compare bootstrapped estimates with original fixed effect estimates
-boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(SIR_model)),
-  Original_Estimate = fixef(SIR_model),
-  Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(SIR_model) - apply(boot_model$t, 2, median)
-)
-
-# Print bootstrapped CI comparison
-print(ci_comparison)
-
-# Print bootstrapped fixed effects comparison
-print(boot_summary)
-
-
-
-#### Decomposition ----
-Decomposition_model <- lmer(MassLoss_2023 ~ 
-                              CO2CperHourperg_2023 + 
-                              PercentC_SOIL_2023 +
-                              PercentN_LITTER_2023 +
-                              MassLoss_2021 +
-                              (1 | Site), 
-                            data = final_data_year)
-summary(Decomposition_model)
-
-
-##### Check assumptions ----
-fixed_model <- lm(MassLoss_2023 ~ 
-                    CO2CperHourperg_2023 + 
-                    PercentC_SOIL_2023 +
-                    PercentN_LITTER_2023 +
-                    MassLoss_2021,
-                  data = final_data_year)
-vif_values <- vif(fixed_model)
-print(vif_values) # good
-
+##### Check assumptions (LM) ----
 plot(Decomposition_model)
 simulation_output <- simulateResiduals(fittedModel = Decomposition_model)
-plot(simulation_output) # not great
+plot(simulation_output)
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # good
 
-##### Non-parametric bootstrapping ----
+##### Non-parametric bootstrapping for lm ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
-  mod <- lmer(MassLoss_2023 ~ 
-                CO2CperHourperg_2023 + 
-                PercentC_SOIL_2023 +
-                PercentN_LITTER_2023 +
-                MassLoss_2021 +
-                (1 | Site), 
-              data = d)
-  return(fixef(mod))
+  mod <- lm(MassLoss_2023 ~ 
+              CO2CperHourperg_2023 + 
+              PercentC_SOIL_2023 +
+              PercentN_LITTER_2023 +
+              MassLoss_2021,
+            data = d)
+  return(coef(mod))  # return coefficients for lm objects
 }
 
+# Set seed for reproducibility
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved
+# Perform bootstrapping with 1000 resamples
+boot_model <- boot(final_data_year, boot_fun, R = 1000) 
 
-# given diagnostics, boostrapping IS necessary
-
-## Diagnose boundary(singular) error
-
-isSingular(Decomposition_model) # not an issue with the original model
-summary(Decomposition_model) 
-VarCorr(Decomposition_model) # super small random effects variance; likely the culprit
-
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(MassLoss_2023 ~ 
-                CO2CperHourperg_2023 + 
-                PercentC_SOIL_2023 + 
-                PercentN_LITTER_2023 +
-                MassLoss_2021 +
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
-
-
-# 1. Extract original confidence intervals
-original_ci <- confint(Decomposition_model, parm = names(fixef(Decomposition_model)), level = 0.95)
+# 1. Extract original confidence intervals for lm model using `coef()`
+original_ci <- confint(Decomposition_model, parm = names(coef(Decomposition_model)), level = 0.95)
 original_ci <- as.data.frame(original_ci)
 colnames(original_ci) <- c("Original_Lower", "Original_Upper")
 
 # 2. Initialize data frame
 boot_ci_table <- data.frame(
-  Fixed_Effect = names(fixef(Decomposition_model)),
+  Fixed_Effect = names(coef(Decomposition_model)),
   Boot_Lower = NA,
   Boot_Upper = NA
 )
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(fixef(Decomposition_model))) {
+for (i in seq_along(coef(Decomposition_model))) {
   boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
@@ -1382,19 +1313,23 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
   warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
 }
 
-# 5. Compare bootstrapped estimates with original fixed effect estimates
+# 5. Compare bootstrapped estimates with original fixed effect estimates using `coef()` for lm objects
 boot_summary <- data.frame(
-  Fixed_Effect = names(fixef(Decomposition_model)),
-  Original_Estimate = fixef(Decomposition_model),
+  Fixed_Effect = names(coef(Decomposition_model)),
+  Original_Estimate = coef(Decomposition_model),
   Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = fixef(Decomposition_model) - apply(boot_model$t, 2, median)
+  Difference = coef(Decomposition_model) - apply(boot_model$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
-print(ci_comparison)
+print(ci_comparison) 
 
 # Print bootstrapped fixed effects comparison
-print(boot_summary)
+print(boot_summary) 
+
+
+
+
 
 
 
@@ -1426,6 +1361,22 @@ plot(simulation_output) # good
 testDispersion(simulation_output) # fine
 testZeroInflation(simulation_output) # fine
 
+# given diagnostics, bootstrapping is NOT necessary
+
+
+
+##### Random effects model comparison ---- 
+PlantDiversity_model_noRE <- lm(PlantDiversity_2023 ~ 
+                                  PercentC_SOIL_2023 + 
+                                  SORU_Biomass_2023 +
+                                  average_SOM_2021 +
+                                  PlantDiversity_2021  ,
+                                data = final_data_year)
+
+anova(PlantDiversity_model, PlantDiversity_model_noRE)
+VarCorr(PlantDiversity_model)
+# keep random effects
+
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
@@ -1444,7 +1395,7 @@ set.seed(1231)
 
 boot_model <- boot(final_data_year, boot_fun, R = 1000)
 
-# given diagnostics, bootstrapping is NOT necessary
+
 
 
 # 1. Extract original confidence intervals
@@ -1493,7 +1444,11 @@ print(ci_comparison)
 # Print bootstrapped fixed effects comparison
 print(boot_summary)
 
-#### LitterN ----
+
+
+
+
+#### LitterN: START HERE; IMPROVE MODEL FIT ----
 LitterN_model <- lmer(PercentN_LITTER_2023 ~ 
                         PercentN_POPRC_2023 + 
                         PercentN_SORU_2023 + 
@@ -1515,7 +1470,19 @@ plot(LitterN_model)
 simulation_output <- simulateResiduals(fittedModel = LitterN_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # good
-testZeroInflation(simulation_output) # good
+testZeroInflation(simulation_output) # not good
+
+##### Random effects model comparison ---- 
+LitterN_model_noRE <- lm(PercentN_LITTER_2023 ~ 
+                           PercentN_POPRC_2023 + 
+                           PercentN_SORU_2023 + 
+                           PercentN_LITTER_2021,
+                         data = final_data_year)
+
+anova(LitterN_model, LitterN_model_noRE)
+VarCorr(LitterN_model)
+# keep random effects
+
 
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
@@ -1582,22 +1549,162 @@ print(boot_summary)
 
 
 
+#### LitterC ----
+LitterC_model <- lmer(PercentC_LITTER_2023 ~ 
+                        PercentC_POPRC_2023 + 
+                        PercentC_SORU_2023 + 
+                        PercentC_LITTER_2021 + 
+                        (1 | Site), 
+                      data = final_data_year)
+summary(LitterC_model)
+
+##### Check assumptions ----
+fixed_model <- lm(PercentC_LITTER_2023 ~ 
+                    PercentC_POPRC_2023 + 
+                    PercentC_SORU_2023 + 
+                    PercentC_LITTER_2021,
+                  data = final_data_year)
+vif_values <- vif(fixed_model)
+print(vif_values) # good
+
+plot(LitterC_model)
+simulation_output <- simulateResiduals(fittedModel = LitterC_model)
+plot(simulation_output) # not great
+testDispersion(simulation_output) # good
+testZeroInflation(simulation_output) # zero-inflated
+
+# given the diagnostics, non-parametric boostrapping is necessary
+
+
+##### Random effects model comparison ---- 
+LitterC_model_noRE <- lm(PercentC_LITTER_2023 ~ 
+                           PercentC_POPRC_2023 + 
+                           PercentC_SORU_2023 + 
+                           PercentC_LITTER_2021,
+                         data = final_data_year)
+
+anova(LitterC_model, LitterC_model_noRE)
+VarCorr(LitterC_model)
+# keep random effects
+
+
+##### Non-parametric bootstrapping ----
+# Function for bootstrapping
+boot_fun <- function(data, indices) {
+  d <- data[indices, ]  # resample
+  mod <- lmer(PercentC_LITTER_2023 ~ 
+                PercentC_POPRC_2023 + 
+                PercentC_SORU_2023 + 
+                PercentC_LITTER_2021 + 
+                (1 | Site), 
+              data = d)
+  return(fixef(mod))
+}
+
+set.seed(1231)
+
+boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks
+
+
+## Diagnose boundary(singular) error
+
+isSingular(LitterC_model) # not an issue with the original model
+summary(LitterC_model) 
+VarCorr(LitterC_model)
+
+
+# Modify bootstrapping with relaxed tolerance for small variances
+boot_fun_stratified <- function(data, indices) {
+  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
+    resample_indices <- sample(nrow(subset), replace = TRUE)
+    subset[resample_indices, ]
+  }))
+  
+  
+  # Fit model on resampled data with small variance allowed
+  mod <- lmer(PercentC_LITTER_2023 ~ 
+                PercentC_POPRC_2023 + 
+                PercentC_SORU_2023 + 
+                PercentC_LITTER_2021 + 
+                (1 | Site), 
+              data = resampled_data,
+              control = lmerControl(check.nlev.gtr.1 = "ignore", 
+                                    check.conv.singular = "ignore", 
+                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
+  
+  return(fixef(mod))  # Return fixed effects
+}
+
+# Bootstrapping with adjusted tolerance
+set.seed(1231)
+boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
+
+
+
+
+# 1. Extract original confidence intervals
+original_ci <- confint(LitterC_model, parm = names(fixef(LitterC_model)), level = 0.95)
+original_ci <- as.data.frame(original_ci)
+colnames(original_ci) <- c("Original_Lower", "Original_Upper")
+
+# 2. Initialize data frame
+boot_ci_table <- data.frame(
+  Fixed_Effect = names(fixef(LitterC_model)),
+  Boot_Lower = NA,
+  Boot_Upper = NA
+)
+
+# 3. Iterate over fixed effects to get bootstrapped CIs
+for (i in seq_along(fixef(LitterC_model))) {
+  boot_ci_i <- boot.ci(boot_model_stratified, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
+    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
+    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
+  } else {
+    # error handling
+    boot_ci_table$Boot_Lower[i] <- NA
+    boot_ci_table$Boot_Upper[i] <- NA
+  }
+}
+
+# 4. Error handling: Ensure that both tables have the same number of rows
+if (nrow(original_ci) == nrow(boot_ci_table)) {
+  ci_comparison <- cbind(Fixed_Effect = rownames(original_ci), original_ci, boot_ci_table[, -1])
+} else {
+  warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
+}
+
+# 5. Compare bootstrapped estimates with original fixed effect estimates
+boot_summary <- data.frame(
+  Fixed_Effect = names(fixef(LitterC_model)),
+  Original_Estimate = fixef(LitterC_model),
+  Bootstrapped_Median = apply(boot_model_stratified$t, 2, median),
+  Difference = fixef(LitterC_model) - apply(boot_model_stratified$t, 2, median)
+)
+
+# Print bootstrapped CI comparison
+print(ci_comparison)
+
+# Print bootstrapped fixed effects comparison
+print(boot_summary)
+
+
+
+
 #### N-min ----
-Nmin_model <- lmer(`Overall mineralization rate_2023` ~ 
+Nmin_model <- lmer(Overall_mineralization_rate_2023 ~ 
                      PercentN_SOIL_2023 + 
-                     average_SOM_2021 +
                      CO2CperHourperg_2023 + 
-                     `Overall mineralization rate_2021` +
+                     Overall_mineralization_rate_2021 +
                      (1 | Site), 
                    data = final_data_year)
 summary(Nmin_model)
 
 ##### Check assumptions ----
-fixed_model <- lm(`Overall mineralization rate_2023` ~ 
+fixed_model <- lm(Overall_mineralization_rate_2023 ~ 
                     PercentN_SOIL_2023 + 
-                    average_SOM_2021 +
                     CO2CperHourperg_2023 + 
-                    `Overall mineralization rate_2021`,
+                    Overall_mineralization_rate_2021,
                   data = final_data_year)
 vif_values <- vif(fixed_model)
 print(vif_values) # good
@@ -1608,15 +1715,26 @@ plot(simulation_output) # not great
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # good
 
+
+##### Random effects model comparison ---- 
+Nmin_model_noRE <- lm(Overall_mineralization_rate_2023 ~ 
+                        PercentN_SOIL_2023 + 
+                        CO2CperHourperg_2023 + 
+                        Overall_mineralization_rate_2021,
+                      data = final_data_year)
+
+anova(Nmin_model, Nmin_model_noRE)
+VarCorr(Nmin_model)
+# keep random effects
+
 ##### Non-parametric bootstrapping ----
 # Function for bootstrapping
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
-  mod <- lmer(`Overall mineralization rate_2023` ~ 
+  mod <- lmer(Overall_mineralization_rate_2023 ~ 
                 PercentN_SOIL_2023 + 
-                average_SOM_2021 +
                 CO2CperHourperg_2023 + 
-                `Overall mineralization rate_2021` +
+                Overall_mineralization_rate_2021 +
                 (1 | Site), 
               data = d)
   return(fixef(mod))
@@ -1676,6 +1794,23 @@ print(boot_summary)
 ### SEM-----
 library(piecewiseSEM)
 
+# Check individual models
+summary(SORU_model)
+summary(POPRC_model)
+summary(SORUN_model)
+summary(SORUC_model)
+summary(POPRCC_model)
+summary(POPRCN_model)
+summary(LitterC_model)
+summary(SoilC_model)
+summary(SoilN_model)
+summary(SIR_model)
+summary(Decomposition_model)
+summary(PlantDiversity_model)
+summary(LitterN_model)
+summary(Nmin_model)
+
+
 sem_model <- psem(
   SORU_model,
   POPRC_model,
@@ -1683,23 +1818,15 @@ sem_model <- psem(
   SORUC_model,
   POPRCC_model,
   POPRCN_model,
-  LitterC_model,
-  SoilC_model,
-  SoilN_model,
+  #LitterC_model,
+  #SoilC_model,
+  #SoilN_model,
   SIR_model,
   Decomposition_model,
   PlantDiversity_model,
   LitterN_model,
-  Nmin_mode
+  Nmin_model,
+  data = final_data_year
 )
 
-# Summarize SEM (for path structure)
 summary(sem_model)
-
-# Evaluate model fit
-sem_fit <- summary(sem_model)
-print(sem_fit)
-
-# Extract path coefficients
-sem_paths <- coefs(sem_model)
-print(sem_paths)

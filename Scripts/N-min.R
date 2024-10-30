@@ -131,9 +131,9 @@ calculate_rate <- function(data, year, soil_depth = 10) {
     mutate(
       NH4_diff = `N.NH4..mg.per.mL.`[2] - `N.NH4..mg.per.mL.`[1],
       NO3_diff = `N.NO3..mg.per.mL.`[2] - `N.NO3..mg.per.mL.`[1],
-      # Calculate rates, scaled to per month
-      NH4_rate = (NH4_diff * 0.001) * SoilBulkDensity_avg * soil_depth, # g/cm² per month
-      NO3_rate = (NO3_diff * 0.001) * SoilBulkDensity_avg * soil_depth, # g/cm² per month
+      # Calculate rates, scaled to per month and converted to mg/cm³
+      NH4_rate = (NH4_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg/cm³ per month
+      NO3_rate = (NO3_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg/cm³ per month
       Overall_rate = NH4_rate + NO3_rate
     ) %>%
     ungroup()
@@ -183,7 +183,7 @@ N_min_full_data <- bind_rows(N_min_2021_clean, N_min_2023_clean) %>%
     `Overall mineralization rate` = Overall_rate
   )
 
-## Units are (g N/cm² per month)
+## Units are (mg N/cm² per month)
 
 
 
