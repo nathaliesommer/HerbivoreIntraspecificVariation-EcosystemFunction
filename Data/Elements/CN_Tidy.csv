@@ -207,7 +207,7 @@ Year,Processing.ID,CageID,Replicate,Population,Site,TransplantTreatment,CageTrea
 2021,P_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,POPRC,1.793,1.8,43.3,24,
 2021,S_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,SORU,1.824,2.3,47.7,20.5,
 2021,M_DCN_H5,DCN_H5,5,DC,UP,North,Herbivore,Cage,MISC,1.516,2.6,45,16.8,
-2023,NA,DCN_H5,5,DC,UP,North,Herbivore,Cage,LITTER,NA,NA,NA,NA,None
+2023,NA,DCN_H5,5,DC,UP,North,Herbivore,Cage,LITTER,NA,0.9,43.7,49.5,Imputed
 2023,DCN_H5 SORU (Plant),DCN_H5,5,DC,UP,North,Herbivore,Cage,SORU,2.988,2.7,46,16.7,
 2021,DCN_H6,DCN_H6,6,DC,UP,North,Herbivore,Cage,SOIL,10.088,0.1,1.9,10.2,
 2023,DCN_H6 SOIL,DCN_H6,6,DC,UP,North,Herbivore,Cage,SOIL,10.005,0.1,2.4,12.3,
