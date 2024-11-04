@@ -1,38 +1,55 @@
+# SEMs - Composite Variable
+
+# Treatment_PopType: Levels (Herbivore-Physiological; Herbivore-Behavioral; Vegetation)
+
 ### OVERVIEW: DAG ----
 
 library(ggdag)
 library(ggplot2)
 
 # Define paths
-# ORIGINAL MODEL
+# Initial model: notes
 dag <- dagify(
-  SORUbiomass ~ Treatment + Plasticity, #y
-  POPRCbiomass ~ Treatment + Plasticity, #y
+  SORUbiomass ~ Treatment_PopType, 
+  POPRCbiomass ~ Treatment_PopType,
   SORUN ~ SORUbiomass, #y
   SORUC ~ SORUbiomass, #y
   POPRCC ~ POPRCbiomass, #y
   POPRCN ~ POPRCbiomass, #y
-  LitterC ~ SORUC + POPRCC, #y
+  #LitterC ~ SORUC + POPRCC + MISCC, # removed for singularity + lack of interesting/relevant paths
   LitterN ~ POPRCN + SORUN, #y
-  SoilC ~ Treatment + Plasticity + SORUbiomass  + SIR, #y (removed SOM for multicollinearity; removed LitterC for poor model fit)
-  SoilN ~ Treatment + Plasticity + LitterN, #y
+  SoilC ~ Treatment_PopType + SORUbiomass + SIR, # removed SOM for collinearity and LitterC for poor fit
+  SoilN ~ Treatment_PopType + LitterN, #y
   SIR ~ SoilN + SOM, #y
-  Decomp ~ SIR + SoilC + LitterN, #y
-  PlantDiversity ~ SoilC + SOM + SORUbiomass, #y (removed SoilN for multicollinearity)
-  Nmin ~ SoilN + SIR #y (removed SOM for model fit)
+  #Decomp ~ SIR + LitterN, # removed decomp for poor field proxy
+  PlantDiversity ~ SoilC + SOM + SORUbiomass, #y removed SoilN for multicollinearity
+  Nmin ~ SoilN + SIR #y (removed SOM for poor fit)
 )
 
+# Define paths
+# Final model: clean
+dag <- dagify(
+  SORU_biomass ~ Treatment_PopType, 
+  POPRC_biomass ~ Treatment_PopType,
+  SORU_N ~ SORU_biomass,
+  SORU_C ~ SORU_biomass,
+  POPRC_C ~ POPRC_biomass,
+  POPRC_N ~ POPRC_biomass,
+  Litter_N ~ POPRC_N + SORU_N,
+  Soil_C ~ Treatment_PopType + SORU_biomass + SIR, 
+  Soil_N ~ Treatment_PopType + LitterN,
+  SIR ~ Soil_N + SOM,
+  PlantDiversity ~ Soil_C + SOM + SORU_biomass, 
+  Nmin ~ Soil_N + SIR 
+)
 
 ggdag(dag, text = FALSE) + 
-  geom_dag_node(data = . %>% filter(name %in% c("Treatment", "Plasticity")), color = "darkgreen", size = 28) +  
-  geom_dag_node(data = . %>% filter(name %in% c("Temperature")), color = "brown", size = 28) +
-  geom_dag_node(data = . %>% filter(!name %in% c("Treatment", "Plasticity", "Temperature")), size = 28, color = "darkgray") +  
+  geom_dag_node(data = . %>% filter(name == "Treatment_PopType"), color = "darkgreen", size = 28) +  
+  geom_dag_node(data = . %>% filter(!name == "Treatment_PopType"), size = 28, color = "darkgray") +  
   geom_dag_edges_link(arrow = arrow(length = unit(0.1, "inches")), edge_width = 0.8) +
   geom_dag_text(size = 2.5) + 
   theme_void() +  
   theme(legend.position = "none")
-
-
 
 ### Scripts to run, objects needed ----
 
@@ -112,12 +129,11 @@ combined_data <- decomp_data %>%
   left_join(som_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
   # Ensure Site column is present
   mutate(Site = coalesce(Site.x, Site.y, Site)) %>%
-  # Conditionally mutate PopulationType based on Treatment
-  mutate(PopulationType = case_when(
-    Treatment == "Vegetation" ~ NA,
-    Population %in% c("YF", "DC", "SC") ~ "Physiological",
-    Population %in% c("FN", "UP") ~ "Behavioral"
-  ))
+  # Create a composite Treatment_PopType variable
+  mutate(Treatment_PopType = case_when(
+    Treatment == "Vegetation" ~ Treatment,
+    Population %in% c("YF", "DC", "SC") ~ "Herbivore-Physiological",
+    Population %in% c("FN", "UP") ~ "Herbivore-Behavioral"))
 
 
 # Create final_data_year with variables spread by Year
@@ -129,24 +145,14 @@ final_data_year <- final_data_year %>%
   select(-Site.y, -Site.x, -average_SOM_2023)
 
 
-# Relevel for easier mixed-effects model interpretation
-final_data_year$Treatment <- as.factor(final_data_year$Treatment)
-final_data_year$Treatment <- relevel(final_data_year$Treatment, ref = "Vegetation")
-final_data_year$PopulationType <- as.factor(final_data_year$PopulationType)
-final_data_year$PopulationType <- relevel(final_data_year$PopulationType, ref = "Physiological")
-
-final_data_year %>%
-  filter(if_any(-PopulationType, is.na)) %>%
-  print()
+# Relevel for model interpretation
+final_data_year$Treatment_PopType <- as.factor(final_data_year$Treatment_PopType)
+final_data_year$Treatment_PopType <- relevel(final_data_year$Treatment_PopType, ref = "Vegetation")
 
 
 # Drop DCS_H3; FNN_H8; SCH_V2 - no data for any metric in 2023
 final_data_year <- final_data_year %>% 
   filter(!Sample_ID %in% c("DCS_H3", "FNN_H8", "SCH_V2"))
-
-final_data_year %>%
-  filter(if_any(-PopulationType, is.na)) %>%
-  print()
 
 final_data_year %>% group_by(Sample_ID) %>%
   filter(n() > 1) %>%
@@ -161,21 +167,18 @@ library(boot)
 
 ### Mixed-effects models ----
 
-#### SORU biomass: Herbivore ----
-
+#### SORU biomass ----
 
 SORU_model <- lmer(SORU_Biomass_2023 ~ 
-                     Treatment +
-                     PopulationType +
+                     Treatment_PopType +
                      SORU_Biomass_2021 + 
                      (1 | Site), 
                    data = final_data_year)
- summary(SORU_model)
+summary(SORU_model)
 
 ##### Check assumptions ----
 fixed_model <- lm(SORU_Biomass_2023 ~ 
-                    Treatment + 
-                    PopulationType + 
+                    Treatment_PopType + 
                     SORU_Biomass_2021,
                   data = final_data_year)
 
@@ -190,8 +193,7 @@ testZeroInflation(simulation_output) # fine
 
 ##### Random effects model comparison ---- 
 SORU_model_noRE <- lm(SORU_Biomass_2023 ~ 
-                        Treatment +
-                        PopulationType +
+                        Treatment_PopType +
                         SORU_Biomass_2021,
                       data = final_data_year)
 
@@ -204,8 +206,7 @@ VarCorr(SORU_model)
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lmer(SORU_Biomass_2023 ~ 
-                Treatment + 
-                PopulationType + 
+                Treatment_PopType + 
                 SORU_Biomass_2021 + 
                 (1 | Site), 
               data = d)
@@ -271,8 +272,7 @@ print(boot_summary) # good
 
 #### POPRC biomass ----
 POPRC_model <- lmer(POPRC_Biomass_2023 ~ 
-                      Treatment + 
-                      PopulationType + 
+                      Treatment_PopType + 
                       POPRC_Biomass_2021 + 
                       (1 | Site), 
                     data = final_data_year)
@@ -280,8 +280,7 @@ summary(POPRC_model)
 
 ##### Check assumptions ----
 fixed_model <- lm(POPRC_Biomass_2023 ~ 
-                    Treatment + 
-                    PopulationType + 
+                    Treatment_PopType + 
                     POPRC_Biomass_2021, 
                   data = final_data_year)
 vif_values <- vif(fixed_model)
@@ -295,10 +294,9 @@ testZeroInflation(simulation_output) # good
 
 ##### Random effects model comparison ---- 
 POPRC_model_noRE <- lm(POPRC_Biomass_2023 ~ 
-                        Treatment +
-                        PopulationType +
-                        POPRC_Biomass_2021,
-                      data = final_data_year)
+                         Treatment_PopType +
+                         POPRC_Biomass_2021,
+                       data = final_data_year)
 
 anova(POPRC_model, POPRC_model_noRE)
 VarCorr(POPRC_model)
@@ -309,8 +307,7 @@ VarCorr(POPRC_model)
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lmer(POPRC_Biomass_2023 ~ 
-                Treatment + 
-                PopulationType + 
+                Treatment_PopType + 
                 POPRC_Biomass_2021 +  
                 (1 | Site), 
               data = d)
@@ -375,10 +372,10 @@ print(boot_summary) # good
 
 #### SORU %N ----
 SORUN_model <- lmer(PercentN_SORU_2023 ~ 
-                    SORU_Biomass_2023 +
-                    PercentN_SORU_2021 +
-                    (1 | Site), 
-                   data = final_data_year)
+                      SORU_Biomass_2023 +
+                      PercentN_SORU_2021 +
+                      (1 | Site), 
+                    data = final_data_year)
 summary(SORUN_model)
 
 ##### Check assumptions ----
@@ -479,10 +476,10 @@ print(boot_summary) # good
 
 #### SORU %C ----
 SORUC_model <- lmer(PercentC_SORU_2023 ~ 
-                    SORU_Biomass_2023 +
-                    PercentC_SORU_2021 +
-                    (1 | Site), 
-                   data = final_data_year)
+                      SORU_Biomass_2023 +
+                      PercentC_SORU_2021 +
+                      (1 | Site), 
+                    data = final_data_year)
 summary(SORUC_model)
 
 ##### Check assumptions ----
@@ -584,10 +581,10 @@ print(boot_summary)
 
 #### POPRC %C ----
 POPRCC_model <- lmer(PercentC_POPRC_2023 ~ 
-                    POPRC_Biomass_2023 +
-                    PercentC_POPRC_2021 +
-                    (1 | Site), 
-                   data = final_data_year)
+                       POPRC_Biomass_2023 +
+                       PercentC_POPRC_2021 +
+                       (1 | Site), 
+                     data = final_data_year)
 summary(POPRCC_model)
 
 ##### Check assumptions ----
@@ -616,13 +613,12 @@ VarCorr(POPRCC_model)
 # ! drop random effects
 
 POPRCC_model <- lm(PercentC_POPRC_2023 ~ 
-                       POPRC_Biomass_2023 +
-                       PercentC_POPRC_2021,
-                     data = final_data_year)
+                     POPRC_Biomass_2023 +
+                     PercentC_POPRC_2021,
+                   data = final_data_year)
 summary(POPRCC_model)
 
 ##### Check assumptions (LM) ----
-plot(POPRCC_model) # not great
 simulation_output <- simulateResiduals(fittedModel = POPRCC_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # fine
@@ -818,8 +814,7 @@ print(boot_summary)
 #### SoilN ----
 
 SoilN_model <- lmer(PercentN_SOIL_2023 ~ 
-                      Treatment *
-                      PopulationType + 
+                      Treatment_PopType + 
                       PercentN_LITTER_2023 + 
                       PercentN_SOIL_2021 + 
                       (1 | Site), 
@@ -828,8 +823,7 @@ summary(SoilN_model)
 
 ##### Check assumptions ----
 fixed_model <- lm(PercentN_SOIL_2023 ~ 
-                    Treatment + 
-                    PopulationType + 
+                    Treatment_PopType + 
                     PercentN_LITTER_2023 + 
                     PercentN_SOIL_2021,
                   data = final_data_year)
@@ -845,8 +839,7 @@ testZeroInflation(simulation_output) # good
 
 ##### Random effects model comparison ---- 
 SoilN_model_noRE <- lm(PercentN_SOIL_2023 ~ 
-                         Treatment + 
-                         PopulationType + 
+                         Treatment_PopType + 
                          PercentN_LITTER_2023 + 
                          PercentN_SOIL_2021,
                        data = final_data_year)
@@ -860,8 +853,7 @@ VarCorr(SoilN_model)
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lmer(PercentN_SOIL_2023 ~ 
-                Treatment + 
-                PopulationType + 
+                Treatment_PopType + 
                 PercentN_LITTER_2023 + 
                 PercentN_SOIL_2021 +
                 (1 | Site), 
@@ -871,41 +863,7 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks: solved below
-# convergence error
-
-isSingular(SoilN_model) # not an issue with the original model
-summary(SoilN_model) 
-VarCorr(SoilN_model) # site variance is small, which is likely the culprit
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(PercentN_SOIL_2023 ~ 
-                Treatment + 
-                PopulationType + 
-                PercentN_LITTER_2023 + 
-                PercentN_SOIL_2021 +
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
+boot_model <- boot(final_data_year, boot_fun, R = 1000) 
 
 
 # 1. Extract original confidence intervals
@@ -922,7 +880,7 @@ boot_ci_table <- data.frame(
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
 for (i in seq_along(fixef(SoilN_model))) {
-  boot_ci_i <- boot.ci(boot_model_stratified, type = "perc", index = i)  # Use the correct boot object
+  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
     boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
@@ -944,8 +902,8 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
 boot_summary <- data.frame(
   Fixed_Effect = names(fixef(SoilN_model)),
   Original_Estimate = fixef(SoilN_model),
-  Bootstrapped_Median = apply(boot_model_stratified$t, 2, median),  # Use the correct boot object
-  Difference = fixef(SoilN_model) - apply(boot_model_stratified$t, 2, median)
+  Bootstrapped_Median = apply(boot_model$t, 2, median),
+  Difference = fixef(SoilN_model) - apply(boot_model$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
@@ -961,19 +919,17 @@ print(boot_summary)
 #### SoilC ----
 
 SoilC_model <- lmer(PercentC_SOIL_2023 ~ 
-                      Treatment + 
-                      PopulationType + 
+                      Treatment_PopType + 
                       SORU_Biomass_2023 +
                       CO2CperHourperg_2023 +
-                      PercentC_SOIL_2021 + 
+                      PercentC_SOIL_2021 +
                       (1 | Site), 
                     data = final_data_year)
 summary(SoilC_model)
 
 ##### Check assumptions ----
 fixed_model <- lm(PercentC_SOIL_2023 ~ 
-                    Treatment + 
-                    PopulationType +
+                    Treatment_PopType + 
                     SORU_Biomass_2023 +
                     CO2CperHourperg_2023 +
                     PercentC_SOIL_2021,
@@ -990,8 +946,7 @@ testZeroInflation(simulation_output) # good
 
 ##### Random effects model comparison ---- 
 SoilC_model_noRE <- lm(PercentC_SOIL_2023 ~ 
-                         Treatment + 
-                         PopulationType +
+                         Treatment_PopType + 
                          SORU_Biomass_2023 +
                          CO2CperHourperg_2023 +
                          PercentC_SOIL_2021,
@@ -1004,43 +959,40 @@ VarCorr(SoilC_model)
 # keep
 
 
-
-##### FIX: NON-LM Non-parametric bootstrapping for lm ----
+##### Non-parametric bootstrapping ----
 # Function for bootstrapping
-# boot_fun <- function(data, indices) {
-#  d <- data[indices, ]  # resample
-#  mod <- lm(PercentC_SOIL_2023 ~ 
-#              Treatment + 
-#              PopulationType +
-#              SORU_Biomass_2023 +
-#              PercentC_LITTER_2023 +
-#              CO2CperHourperg_2023 +
-#              PercentC_SOIL_2021,
-#            data = d)
-#  return(coef(mod))  # return coefficients for lm objects
-#}
+boot_fun <- function(data, indices) {
+  d <- data[indices, ]  # resample
+  mod <- lmer(PercentC_SOIL_2023 ~ 
+                Treatment_PopType + 
+                SORU_Biomass_2023 +
+                CO2CperHourperg_2023 +
+                PercentC_SOIL_2021 + 
+                (1 | Site),
+              data = d)
+  return(fixef(mod))
+}
 
-# Set seed for reproducibility
-#set.seed(1231)
+set.seed(1231)
 
-# Perform bootstrapping with 1000 resamples
-# boot_model <- boot(final_data_year, boot_fun, R = 1000) 
+boot_model <- boot(final_data_year, boot_fun, R = 1000) 
 
-# 1. Extract original confidence intervals for lm model using `coef()`
-# original_ci <- confint(SoilC_model, parm = names(coef(SoilC_model)), level = 0.95)
-# original_ci <- as.data.frame(original_ci)
-# colnames(original_ci) <- c("Original_Lower", "Original_Upper")
+
+# 1. Extract original confidence intervals
+original_ci <- confint(SoilC_model, parm = names(fixef(SoilC_model)), level = 0.95)
+original_ci <- as.data.frame(original_ci)
+colnames(original_ci) <- c("Original_Lower", "Original_Upper")
 
 # 2. Initialize data frame
-# boot_ci_table <- data.frame(
-#  Fixed_Effect = names(coef(SoilC_model)),
-#  Boot_Lower = NA,
-#  Boot_Upper = NA
-#)
+boot_ci_table <- data.frame(
+  Fixed_Effect = names(fixef(SoilC_model)),
+  Boot_Lower = NA,
+  Boot_Upper = NA
+)
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
-for (i in seq_along(coef(SoilC_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+for (i in seq_along(fixef(SoilC_model))) {
+  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
     boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
@@ -1058,23 +1010,19 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
   warning("Mismatch between the number of fixed effects in original CIs and bootstrapped CIs. Check if all fixed effects are present.")
 }
 
-# 5. Compare bootstrapped estimates with original fixed effect estimates using `coef()` for lm objects
+# 5. Compare bootstrapped estimates with original fixed effect estimates
 boot_summary <- data.frame(
-  Fixed_Effect = names(coef(SoilC_model)),
-  Original_Estimate = coef(SoilC_model),
+  Fixed_Effect = names(fixef(SoilC_model)),
+  Original_Estimate = fixef(SoilC_model),
   Bootstrapped_Median = apply(boot_model$t, 2, median),
-  Difference = coef(SoilC_model) - apply(boot_model$t, 2, median)
+  Difference = fixef(SoilC_model) - apply(boot_model$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
-print(ci_comparison) 
+print(ci_comparison)
 
 # Print bootstrapped fixed effects comparison
-print(boot_summary) 
-
-
-
-
+print(boot_summary)
 
 
 
@@ -1106,10 +1054,10 @@ testZeroInflation(simulation_output) # good
 
 ##### Random effects model comparison ---- 
 SIR_model_noRE <- lm(CO2CperHourperg_2023 ~ 
-                      PercentN_SOIL_2023 + 
-                      average_SOM_2021 +
-                      CO2CperHourperg_2021,
-                    data = final_data_year)
+                       PercentN_SOIL_2023 + 
+                       average_SOM_2021 +
+                       CO2CperHourperg_2021,
+                     data = final_data_year)
 
 anova(SIR_model, SIR_model_noRE)
 VarCorr(SIR_model)
@@ -1180,10 +1128,9 @@ print(boot_summary)
 
 
 
-#### Decomposition ----
+#### REMOVE: Decomposition ----
 Decomposition_model <- lmer(MassLoss_2023 ~ 
                               CO2CperHourperg_2023 + 
-                              PercentC_SOIL_2023 +
                               PercentN_LITTER_2023 +
                               MassLoss_2021 +
                               (1 | Site), 
@@ -1194,7 +1141,6 @@ summary(Decomposition_model)
 ##### Check assumptions ----
 fixed_model <- lm(MassLoss_2023 ~ 
                     CO2CperHourperg_2023 + 
-                    PercentC_SOIL_2023 +
                     PercentN_LITTER_2023 +
                     MassLoss_2021,
                   data = final_data_year)
@@ -1211,7 +1157,6 @@ testZeroInflation(simulation_output) # good
 ##### Random effects model comparison ---- 
 Decomposition_model_noRE <- lm(MassLoss_2023 ~ 
                                  CO2CperHourperg_2023 + 
-                                 PercentC_SOIL_2023 +
                                  PercentN_LITTER_2023 +
                                  MassLoss_2021,
                                data = final_data_year)
@@ -1222,7 +1167,7 @@ VarCorr(Decomposition_model)
 
 Decomposition_model <- Decomposition_model_noRE
 
-summary(Decomposition_model_noRE)
+summary(Decomposition_model)
 
 ##### Check assumptions (LM) ----
 plot(Decomposition_model)
@@ -1237,7 +1182,6 @@ boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lm(MassLoss_2023 ~ 
               CO2CperHourperg_2023 + 
-              PercentC_SOIL_2023 +
               PercentN_LITTER_2023 +
               MassLoss_2021,
             data = d)
@@ -1305,12 +1249,12 @@ print(boot_summary)
 #### PlantDiversity ----
 
 PlantDiversity_model <- lmer(PlantDiversity_2023 ~ 
-                              PercentC_SOIL_2023 + 
-                              SORU_Biomass_2023 + 
-                              average_SOM_2021 +
-                              PlantDiversity_2021 +
-                              (1 | Site), 
-                            data = final_data_year)
+                               PercentC_SOIL_2023 + 
+                               SORU_Biomass_2023 + 
+                               average_SOM_2021 +
+                               PlantDiversity_2021 +
+                               (1 | Site), 
+                             data = final_data_year)
 summary(PlantDiversity_model)
 
 
@@ -1518,10 +1462,9 @@ print(boot_summary)
 
 
 
-#### LitterC ----
+#### REMOVE: LitterC ----
 LitterC_model <- lmer(PercentC_LITTER_2023 ~ 
-                        PercentC_POPRC_2023 + 
-                        PercentC_SORU_2023 + 
+                        PercentC_MISC_2023 + 
                         PercentC_LITTER_2021 + 
                         (1 | Site), 
                       data = final_data_year)
@@ -1529,8 +1472,7 @@ summary(LitterC_model)
 
 ##### Check assumptions ----
 fixed_model <- lm(PercentC_LITTER_2023 ~ 
-                    PercentC_POPRC_2023 + 
-                    PercentC_SORU_2023 + 
+                    PercentC_MISC_2023 + 
                     PercentC_LITTER_2021,
                   data = final_data_year)
 vif_values <- vif(fixed_model)
@@ -1540,15 +1482,14 @@ plot(LitterC_model)
 simulation_output <- simulateResiduals(fittedModel = LitterC_model)
 plot(simulation_output) # not great
 testDispersion(simulation_output) # good
-testZeroInflation(simulation_output) # zero-inflated
+testZeroInflation(simulation_output) # good
 
 # given the diagnostics, non-parametric boostrapping is necessary
 
 
 ##### Random effects model comparison ---- 
 LitterC_model_noRE <- lm(PercentC_LITTER_2023 ~ 
-                           PercentC_POPRC_2023 + 
-                           PercentC_SORU_2023 + 
+                           PercentC_MISC_2023 + 
                            PercentC_LITTER_2021,
                          data = final_data_year)
 
@@ -1562,9 +1503,8 @@ VarCorr(LitterC_model)
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lmer(PercentC_LITTER_2023 ~ 
-                PercentC_POPRC_2023 + 
-                PercentC_SORU_2023 + 
-                PercentC_LITTER_2021 + 
+                PercentC_MISC_2023 + 
+                PercentC_LITTER_2021 +
                 (1 | Site), 
               data = d)
   return(fixef(mod))
@@ -1572,43 +1512,7 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000) # breaks
-
-
-## Diagnose boundary(singular) error
-
-isSingular(LitterC_model) # not an issue with the original model
-summary(LitterC_model) 
-VarCorr(LitterC_model)
-
-
-# Modify bootstrapping with relaxed tolerance for small variances
-boot_fun_stratified <- function(data, indices) {
-  resampled_data <- do.call(rbind, lapply(split(data, data$Site), function(subset) {   # stratified resampling by Site
-    resample_indices <- sample(nrow(subset), replace = TRUE)
-    subset[resample_indices, ]
-  }))
-  
-  
-  # Fit model on resampled data with small variance allowed
-  mod <- lmer(PercentC_LITTER_2023 ~ 
-                PercentC_POPRC_2023 + 
-                PercentC_SORU_2023 + 
-                PercentC_LITTER_2021 + 
-                (1 | Site), 
-              data = resampled_data,
-              control = lmerControl(check.nlev.gtr.1 = "ignore", 
-                                    check.conv.singular = "ignore", 
-                                    optCtrl = list(maxfun = 1e5)))  # Apply control settings
-  
-  return(fixef(mod))  # Return fixed effects
-}
-
-# Bootstrapping with adjusted tolerance
-set.seed(1231)
-boot_model_stratified <- boot(final_data_year, boot_fun_stratified, R = 500)
-
-
+boot_model <- boot(final_data_year, boot_fun, R = 1000)
 
 
 # 1. Extract original confidence intervals
@@ -1625,7 +1529,7 @@ boot_ci_table <- data.frame(
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
 for (i in seq_along(fixef(LitterC_model))) {
-  boot_ci_i <- boot.ci(boot_model_stratified, type = "perc", index = i)  # bootstrapped CI for all fixed effects
+  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
   if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
     boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
@@ -1647,8 +1551,8 @@ if (nrow(original_ci) == nrow(boot_ci_table)) {
 boot_summary <- data.frame(
   Fixed_Effect = names(fixef(LitterC_model)),
   Original_Estimate = fixef(LitterC_model),
-  Bootstrapped_Median = apply(boot_model_stratified$t, 2, median),
-  Difference = fixef(LitterC_model) - apply(boot_model_stratified$t, 2, median)
+  Bootstrapped_Median = apply(boot_model$t, 2, median),
+  Difference = fixef(LitterC_model) - apply(boot_model$t, 2, median)
 )
 
 # Print bootstrapped CI comparison
@@ -1770,11 +1674,11 @@ summary(SORUN_model)
 summary(SORUC_model)
 summary(POPRCC_model)
 summary(POPRCN_model)
-summary(LitterC_model)
+#summary(LitterC_model)
 summary(SoilC_model)
 summary(SoilN_model)
 summary(SIR_model)
-summary(Decomposition_model)
+#summary(Decomposition_model)
 summary(PlantDiversity_model)
 summary(LitterN_model)
 summary(Nmin_model)
@@ -1787,11 +1691,9 @@ sem_model_original <- psem(
   SORUC_model,
   POPRCC_model,
   POPRCN_model,
-  LitterC_model, #singularity warning
-  SoilC_model, # NO SINGULARITY warning
-  SoilN_model, #singularity warning
+  SoilC_model,
+  SoilN_model,
   SIR_model,
-  Decomposition_model,
   PlantDiversity_model,
   LitterN_model,
   Nmin_model,
@@ -1800,24 +1702,5 @@ sem_model_original <- psem(
 
 summary(sem_model_original)
 
-sem_model_test <- psem(
-  SORU_model,
-  POPRC_model,
-  SORUN_model,
-  SORUC_model,
-  POPRCC_model,
-  POPRCN_model,
-  LitterC_model_noRE, 
-  SoilC_model_noRE, 
-  SoilN_model_noRE,
-  SIR_model,
-  Decomposition_model,
-  PlantDiversity_model,
-  LitterN_model,
-  Nmin_model,
-  data = final_data_year
-)
-
-summary(sem_model_test)
 
 
