@@ -21,7 +21,7 @@ CNdata <- CNdata %>%
 
 
 
-## Plots for Matthew ----
+## Plots for Matthew (works from CNdata load) ----
 
 means_data <- CNdata %>% 
   filter(Year == 2021) %>% 
