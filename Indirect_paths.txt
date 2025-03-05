@@ -1,0 +1,22 @@
+Treatment	Intermediates	Indirect_Effect_Size
+Treatment_PopType = Herbivore-Behavioral	SORU_Biomass_2023 -> PercentN_SORU_2023	0.2676672
+Treatment_PopType = Herbivore-Behavioral	SORU_Biomass_2023 -> PlantDiversity_2023	-0.1296513
+Treatment_PopType = Herbivore-Physiological	SORU_Biomass_2023 -> PercentN_SORU_2023	0.28486272
+Treatment_PopType = Herbivore-Physiological	SORU_Biomass_2023 -> PlantDiversity_2023	-0.13798038
+Treatment_PopType = Vegetation	SORU_Biomass_2023 -> PercentN_SORU_2023	0.31478528
+Treatment_PopType = Vegetation	SORU_Biomass_2023 -> PlantDiversity_2023	-0.15247412
+Treatment_PopType = Vegetation	POPRC_Biomass_2023 -> PercentC_POPRC_2023	3.18724896
+Treatment_PopType = Vegetation	POPRC_Biomass_2023 -> PlantDiversity_2023	-0.4757088
+Treatment_PopType = Herbivore-Behavioral	POPRC_Biomass_2023 -> PercentC_POPRC_2023	3.68257728
+Treatment_PopType = Herbivore-Behavioral	POPRC_Biomass_2023 -> PlantDiversity_2023	-0.5496384
+Treatment_PopType = Herbivore-Physiological	POPRC_Biomass_2023 -> PercentC_POPRC_2023	3.79366596
+Treatment_PopType = Herbivore-Physiological	POPRC_Biomass_2023 -> PlantDiversity_2023	-0.5662188
+Treatment_PopType = Herbivore-Physiological	PercentC_SOIL_2023	3.3401
+Treatment_PopType = Herbivore-Behavioral	PercentC_SOIL_2023	3.3683
+Treatment_PopType = Vegetation	PercentC_SOIL_2023	3.526
+Treatment_PopType = Herbivore-Physiological	PercentN_SOIL_2023 -> CO2CperHourperg_2023 -> PercentC_SOIL_2023	0.469761683252
+Treatment_PopType = Herbivore-Behavioral	PercentN_SOIL_2023 -> CO2CperHourperg_2023 -> PercentC_SOIL_2023	0.470583304036
+Treatment_PopType = Vegetation	PercentN_SOIL_2023 -> CO2CperHourperg_2023 -> PercentC_SOIL_2023	0.517415688724
+Treatment_PopType = Herbivore-Physiological	Overall_mineralization_rate_2023	10.3263
+Treatment_PopType = Vegetation	Overall_mineralization_rate_2023	13.3928
+Treatment_PopType = Herbivore-Behavioral	Overall_mineralization_rate_2023	14.7161

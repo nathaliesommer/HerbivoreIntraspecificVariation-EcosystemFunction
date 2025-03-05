@@ -1,0 +1,303 @@
+
+Structural Equation Model of sem_model_original 
+
+Call:
+  SORU_Biomass_2023 ~ Treatment_PopType + SORU_Biomass_2021
+  POPRC_Biomass_2023 ~ Treatment_PopType + POPRC_Biomass_2021
+  PercentN_SORU_2023 ~ SORU_Biomass_2023 + PercentN_SORU_2021
+  PercentC_SORU_2023 ~ SORU_Biomass_2023 + PercentC_SORU_2021
+  PercentC_POPRC_2023 ~ POPRC_Biomass_2023 + PercentC_POPRC_2021
+  PercentN_POPRC_2023 ~ POPRC_Biomass_2023 + PercentN_POPRC_2021
+  PercentC_SOIL_2023 ~ Treatment_PopType + SORU_Biomass_2023 + CO2CperHourperg_2023 + PercentC_SOIL_2021
+  PercentN_SOIL_2023 ~ Treatment_PopType + PercentN_LITTER_2023 + PercentN_SOIL_2021
+  CO2CperHourperg_2023 ~ PercentN_SOIL_2023 + average_SOM_2021 + CO2CperHourperg_2021
+  PlantDiversity_2023 ~ PercentC_SOIL_2023 + SORU_Biomass_2023 + average_SOM_2021 + PlantDiversity_2021
+  PercentN_LITTER_2023 ~ PercentN_POPRC_2023 + PercentN_SORU_2023 + PercentN_LITTER_2021
+  Overall_mineralization_rate_2023 ~ Treatment_PopType + PercentN_SOIL_2023 + CO2CperHourperg_2023 + Overall_mineralization_rate_2021
+
+    AIC
+ 6586.367
+
+---
+Tests of directed separation:
+
+                                                 Independ.Claim Test.Type       DF Crit.Value P.Value    
+                   PercentN_SORU_2023 ~ Treatment_PopType + ...     anova   2.0000     1.6475  0.1964    
+                   PercentC_SORU_2023 ~ Treatment_PopType + ...     anova   2.0000     1.0964  0.3370    
+                  PercentC_POPRC_2023 ~ Treatment_PopType + ...     anova   2.0000     1.3371  0.2660    
+                  PercentN_POPRC_2023 ~ Treatment_PopType + ...     anova   2.0000     1.7888  0.1711    
+                  PlantDiversity_2023 ~ Treatment_PopType + ...     anova   2.0000     1.4211  0.2451    
+                 PercentN_LITTER_2023 ~ Treatment_PopType + ...     anova   2.0000     0.3364  0.7149    
+                 CO2CperHourperg_2023 ~ Treatment_PopType + ...     anova   2.0000     2.5017  0.0858    
+                   POPRC_Biomass_2023 ~ SORU_Biomass_2021 + ...      coef 134.2467     0.7011  0.4039    
+                   PercentC_SOIL_2023 ~ SORU_Biomass_2021 + ...      coef 130.8480     0.0794  0.7786    
+     Overall_mineralization_rate_2023 ~ SORU_Biomass_2021 + ...      coef 132.3196     0.9665  0.3273    
+                   PercentN_SORU_2023 ~ SORU_Biomass_2021 + ...      coef 134.7690     0.8612  0.3551    
+                   PercentC_SORU_2023 ~ SORU_Biomass_2021 + ...      coef 134.7010     2.1948  0.1408    
+                  PercentC_POPRC_2023 ~ SORU_Biomass_2021 + ...      coef 137.0000    -0.3752  0.7081    
+                  PercentN_POPRC_2023 ~ SORU_Biomass_2021 + ...      coef 137.0000     0.2339  0.8154    
+                  PlantDiversity_2023 ~ SORU_Biomass_2021 + ...      coef 135.0000    -1.7600  0.0807    
+                   PercentN_SOIL_2023 ~ SORU_Biomass_2021 + ...      coef 133.0358     0.1208  0.7287    
+                 PercentN_LITTER_2023 ~ SORU_Biomass_2021 + ...      coef 134.1049     0.0174  0.8951    
+                 CO2CperHourperg_2023 ~ SORU_Biomass_2021 + ...      coef 133.4930     0.2571  0.6130    
+                   SORU_Biomass_2023 ~ POPRC_Biomass_2021 + ...      coef 132.6133     7.2015  0.0082  **
+                  PercentC_SOIL_2023 ~ POPRC_Biomass_2021 + ...      coef 131.6897     0.9439  0.3331    
+    Overall_mineralization_rate_2023 ~ POPRC_Biomass_2021 + ...      coef 132.2730     0.2837  0.5952    
+                  PercentN_SORU_2023 ~ POPRC_Biomass_2021 + ...      coef 134.9324     0.2217  0.6385    
+                  PercentC_SORU_2023 ~ POPRC_Biomass_2021 + ...      coef 135.4649     0.0007  0.9786    
+                 PercentC_POPRC_2023 ~ POPRC_Biomass_2021 + ...      coef 137.0000    -2.3788  0.0187   *
+                 PercentN_POPRC_2023 ~ POPRC_Biomass_2021 + ...      coef 137.0000     0.6284  0.5308    
+                 PlantDiversity_2023 ~ POPRC_Biomass_2021 + ...      coef 135.0000    -0.3255  0.7453    
+                  PercentN_SOIL_2023 ~ POPRC_Biomass_2021 + ...      coef 131.7061     2.5159  0.1151    
+                PercentN_LITTER_2023 ~ POPRC_Biomass_2021 + ...      coef 133.1655     0.1781  0.6737    
+                CO2CperHourperg_2023 ~ POPRC_Biomass_2021 + ...      coef 132.7417     6.3273  0.0131   *
+                   SORU_Biomass_2023 ~ PercentN_SORU_2021 + ...      coef 133.8571    17.7685  0.0000 ***
+                  POPRC_Biomass_2023 ~ PercentN_SORU_2021 + ...      coef 135.9038     1.6813  0.1969    
+                  PercentC_SOIL_2023 ~ PercentN_SORU_2021 + ...      coef 133.9155     0.2808  0.5970    
+    Overall_mineralization_rate_2023 ~ PercentN_SORU_2021 + ...      coef 133.9939     0.0315  0.8594    
+                  PercentC_SORU_2023 ~ PercentN_SORU_2021 + ...      coef 127.6164     0.2584  0.6121    
+                 PercentC_POPRC_2023 ~ PercentN_SORU_2021 + ...      coef 137.0000    -0.7963  0.4272    
+                 PercentN_POPRC_2023 ~ PercentN_SORU_2021 + ...      coef 137.0000     0.2660  0.7907    
+                 PlantDiversity_2023 ~ PercentN_SORU_2021 + ...      coef 135.0000    -3.4866  0.0007 ***
+                  PercentN_SOIL_2023 ~ PercentN_SORU_2021 + ...      coef 134.4870     0.1373  0.7115    
+                PercentN_LITTER_2023 ~ PercentN_SORU_2021 + ...      coef 135.8227     0.0359  0.8501    
+                CO2CperHourperg_2023 ~ PercentN_SORU_2021 + ...      coef 134.9127     0.2137  0.6447    
+                   SORU_Biomass_2023 ~ PercentC_SORU_2021 + ...      coef 132.4993     8.9803  0.0033  **
+                  POPRC_Biomass_2023 ~ PercentC_SORU_2021 + ...      coef 133.2209     0.1269  0.7222    
+                  PercentC_SOIL_2023 ~ PercentC_SORU_2021 + ...      coef 132.7942     0.8730  0.3518    
+    Overall_mineralization_rate_2023 ~ PercentC_SORU_2021 + ...      coef 132.7438     0.1935  0.6607    
+                  PercentN_SORU_2023 ~ PercentC_SORU_2021 + ...      coef 136.9985     1.6649  0.1991    
+                 PercentC_POPRC_2023 ~ PercentC_SORU_2021 + ...      coef 137.0000    -0.1526  0.8789    
+                 PercentN_POPRC_2023 ~ PercentC_SORU_2021 + ...      coef 137.0000     0.7185  0.4737    
+                 PlantDiversity_2023 ~ PercentC_SORU_2021 + ...      coef 135.0000    -4.2203  0.0000 ***
+                  PercentN_SOIL_2023 ~ PercentC_SORU_2021 + ...      coef 132.1439     0.0617  0.8042    
+                PercentN_LITTER_2023 ~ PercentC_SORU_2021 + ...      coef 133.3560     0.1799  0.6721    
+                CO2CperHourperg_2023 ~ PercentC_SORU_2021 + ...      coef 133.1850     0.0205  0.8863    
+                  SORU_Biomass_2023 ~ PercentC_POPRC_2021 + ...      coef 132.1717     0.3367  0.5627    
+                 POPRC_Biomass_2023 ~ PercentC_POPRC_2021 + ...      coef 132.3999     0.1126  0.7378    
+                 PercentC_SOIL_2023 ~ PercentC_POPRC_2021 + ...      coef 130.5659     3.8060  0.0532    
+   Overall_mineralization_rate_2023 ~ PercentC_POPRC_2021 + ...      coef 130.2328     0.0288  0.8655    
+                 PercentN_SORU_2023 ~ PercentC_POPRC_2021 + ...      coef 134.6144     0.2500  0.6179    
+                 PercentC_SORU_2023 ~ PercentC_POPRC_2021 + ...      coef 134.8567     0.3360  0.5631    
+                PercentN_POPRC_2023 ~ PercentC_POPRC_2021 + ...      coef 137.0000     1.2254  0.2225    
+                PlantDiversity_2023 ~ PercentC_POPRC_2021 + ...      coef 135.0000    -1.0794  0.2823    
+                 PercentN_SOIL_2023 ~ PercentC_POPRC_2021 + ...      coef 131.3936     0.0366  0.8485    
+               PercentN_LITTER_2023 ~ PercentC_POPRC_2021 + ...      coef 132.3061     3.5805  0.0606    
+               CO2CperHourperg_2023 ~ PercentC_POPRC_2021 + ...      coef 132.4673     0.0124  0.9113    
+                  SORU_Biomass_2023 ~ PercentN_POPRC_2021 + ...      coef 132.8541     0.5409  0.4634    
+                 POPRC_Biomass_2023 ~ PercentN_POPRC_2021 + ...      coef 133.9683     0.1396  0.7093    
+                 PercentC_SOIL_2023 ~ PercentN_POPRC_2021 + ...      coef 131.7698     3.8337  0.0523    
+   Overall_mineralization_rate_2023 ~ PercentN_POPRC_2021 + ...      coef 131.3263     3.9922  0.0478   *
+                 PercentN_SORU_2023 ~ PercentN_POPRC_2021 + ...      coef 136.1557     0.3307  0.5662    
+                 PercentC_SORU_2023 ~ PercentN_POPRC_2021 + ...      coef 136.6886     0.6138  0.4347    
+                PercentC_POPRC_2023 ~ PercentN_POPRC_2021 + ...      coef 137.0000     0.8881  0.3760    
+                PlantDiversity_2023 ~ PercentN_POPRC_2021 + ...      coef 135.0000    -1.9415  0.0543    
+                 PercentN_SOIL_2023 ~ PercentN_POPRC_2021 + ...      coef 132.5157     1.1095  0.2941    
+               PercentN_LITTER_2023 ~ PercentN_POPRC_2021 + ...      coef 133.1030     0.1782  0.6736    
+               CO2CperHourperg_2023 ~ PercentN_POPRC_2021 + ...      coef 132.8193     0.2975  0.5864    
+                   SORU_Biomass_2023 ~ PercentC_SOIL_2021 + ...      coef 135.5448     3.3551  0.0692    
+                  POPRC_Biomass_2023 ~ PercentC_SOIL_2021 + ...      coef 133.0263     0.0001  0.9935    
+    Overall_mineralization_rate_2023 ~ PercentC_SOIL_2021 + ...      coef 131.8621     0.0153  0.9018    
+                  PercentN_SORU_2023 ~ PercentC_SOIL_2021 + ...      coef 112.1571     0.5458  0.4616    
+                  PercentC_SORU_2023 ~ PercentC_SOIL_2021 + ...      coef  94.4527     0.1605  0.6896    
+                 PercentC_POPRC_2023 ~ PercentC_SOIL_2021 + ...      coef 137.0000     2.3754  0.0189   *
+                 PercentN_POPRC_2023 ~ PercentC_SOIL_2021 + ...      coef 137.0000    -0.4427  0.6587    
+                 PlantDiversity_2023 ~ PercentC_SOIL_2021 + ...      coef 135.0000     0.7713  0.4419    
+                  PercentN_SOIL_2023 ~ PercentC_SOIL_2021 + ...      coef 134.5011     9.8370  0.0021  **
+                PercentN_LITTER_2023 ~ PercentC_SOIL_2021 + ...      coef 129.4811     0.1329  0.7160    
+                CO2CperHourperg_2023 ~ PercentC_SOIL_2021 + ...      coef 133.3936     5.8669  0.0168   *
+                   SORU_Biomass_2023 ~ PercentN_SOIL_2021 + ...      coef 134.9708     4.2951  0.0401   *
+                  POPRC_Biomass_2023 ~ PercentN_SOIL_2021 + ...      coef 135.6894     0.5018  0.4799    
+                  PercentC_SOIL_2023 ~ PercentN_SOIL_2021 + ...      coef 131.7987     0.6290  0.4291    
+    Overall_mineralization_rate_2023 ~ PercentN_SOIL_2021 + ...      coef 133.2088     0.0223  0.8815    
+                  PercentN_SORU_2023 ~ PercentN_SOIL_2021 + ...      coef 117.4907     0.1873  0.6660    
+                  PercentC_SORU_2023 ~ PercentN_SOIL_2021 + ...      coef 102.2672     0.0402  0.8414    
+                 PercentC_POPRC_2023 ~ PercentN_SOIL_2021 + ...      coef 137.0000     2.3985  0.0178   *
+                 PercentN_POPRC_2023 ~ PercentN_SOIL_2021 + ...      coef 137.0000    -0.8785  0.3812    
+                 PlantDiversity_2023 ~ PercentN_SOIL_2021 + ...      coef 135.0000     0.2240  0.8231    
+                PercentN_LITTER_2023 ~ PercentN_SOIL_2021 + ...      coef 133.8066     0.7927  0.3749    
+                CO2CperHourperg_2023 ~ PercentN_SOIL_2021 + ...      coef 133.3774    10.6232  0.0014  **
+                     SORU_Biomass_2023 ~ average_SOM_2021 + ...      coef 133.7708     0.2942  0.5885    
+                    POPRC_Biomass_2023 ~ average_SOM_2021 + ...      coef  89.8156     4.7120  0.0326   *
+                    PercentC_SOIL_2023 ~ average_SOM_2021 + ...      coef  64.5456    37.3258  0.0000 ***
+      Overall_mineralization_rate_2023 ~ average_SOM_2021 + ...      coef 115.9087     0.5180  0.4731    
+                    PercentN_SORU_2023 ~ average_SOM_2021 + ...      coef  56.6119     0.8894  0.3497    
+                    PercentC_SORU_2023 ~ average_SOM_2021 + ...      coef  36.8463     1.1567  0.2892    
+                   PercentC_POPRC_2023 ~ average_SOM_2021 + ...      coef 137.0000     1.3284  0.1863    
+                   PercentN_POPRC_2023 ~ average_SOM_2021 + ...      coef 137.0000     0.4998  0.6180    
+                    PercentN_SOIL_2023 ~ average_SOM_2021 + ...      coef 110.5194    21.6707  0.0000 ***
+                  PercentN_LITTER_2023 ~ average_SOM_2021 + ...      coef 113.7701     0.9377  0.3349    
+                 SORU_Biomass_2023 ~ CO2CperHourperg_2021 + ...      coef 133.7008     1.2938  0.2574    
+                POPRC_Biomass_2023 ~ CO2CperHourperg_2021 + ...      coef 135.3211     0.4271  0.5145    
+                PercentC_SOIL_2023 ~ CO2CperHourperg_2021 + ...      coef 133.0877     9.8325  0.0021  **
+  Overall_mineralization_rate_2023 ~ CO2CperHourperg_2021 + ...      coef 133.0043     1.2004  0.2752    
+                PercentN_SORU_2023 ~ CO2CperHourperg_2021 + ...      coef 136.0596     0.0170  0.8964    
+                PercentC_SORU_2023 ~ CO2CperHourperg_2021 + ...      coef 134.1937     0.0181  0.8931    
+               PercentC_POPRC_2023 ~ CO2CperHourperg_2021 + ...      coef 137.0000     1.1053  0.2710    
+               PercentN_POPRC_2023 ~ CO2CperHourperg_2021 + ...      coef 137.0000     0.8973  0.3711    
+               PlantDiversity_2023 ~ CO2CperHourperg_2021 + ...      coef 135.0000     0.1232  0.9022    
+                PercentN_SOIL_2023 ~ CO2CperHourperg_2021 + ...      coef 133.2592     4.3009  0.0400   *
+              PercentN_LITTER_2023 ~ CO2CperHourperg_2021 + ...      coef 135.8064     0.6202  0.4323    
+                  SORU_Biomass_2023 ~ PlantDiversity_2021 + ...      coef 132.6544    10.9473  0.0012  **
+                 POPRC_Biomass_2023 ~ PlantDiversity_2021 + ...      coef 134.8972     0.5411  0.4633    
+                 PercentC_SOIL_2023 ~ PlantDiversity_2021 + ...      coef 131.3543     0.0681  0.7946    
+   Overall_mineralization_rate_2023 ~ PlantDiversity_2021 + ...      coef 133.3516     0.3720  0.5430    
+                 PercentN_SORU_2023 ~ PlantDiversity_2021 + ...      coef 134.5673     6.6929  0.0107   *
+                 PercentC_SORU_2023 ~ PlantDiversity_2021 + ...      coef 135.0937     4.2146  0.0420   *
+                PercentC_POPRC_2023 ~ PlantDiversity_2021 + ...      coef 137.0000     3.1473  0.0020  **
+                PercentN_POPRC_2023 ~ PlantDiversity_2021 + ...      coef 137.0000     0.9619  0.3378    
+                 PercentN_SOIL_2023 ~ PlantDiversity_2021 + ...      coef 132.6066     0.1675  0.6830    
+               PercentN_LITTER_2023 ~ PlantDiversity_2021 + ...      coef 133.9141     0.2534  0.6155    
+               CO2CperHourperg_2023 ~ PlantDiversity_2021 + ...      coef 133.9158     6.8074  0.0101   *
+                 SORU_Biomass_2023 ~ PercentN_LITTER_2021 + ...      coef 133.9913     0.7613  0.3845    
+                POPRC_Biomass_2023 ~ PercentN_LITTER_2021 + ...      coef 135.6466     0.0127  0.9103    
+                PercentC_SOIL_2023 ~ PercentN_LITTER_2021 + ...      coef 133.7050     0.2537  0.6153    
+  Overall_mineralization_rate_2023 ~ PercentN_LITTER_2021 + ...      coef 133.2531     0.7355  0.3926    
+                PercentN_SORU_2023 ~ PercentN_LITTER_2021 + ...      coef 136.9977     0.3785  0.5394    
+                PercentC_SORU_2023 ~ PercentN_LITTER_2021 + ...      coef 136.3743     0.4658  0.4961    
+               PercentC_POPRC_2023 ~ PercentN_LITTER_2021 + ...      coef 137.0000    -0.1411  0.8880    
+               PercentN_POPRC_2023 ~ PercentN_LITTER_2021 + ...      coef 137.0000    -0.8532  0.3950    
+               PlantDiversity_2023 ~ PercentN_LITTER_2021 + ...      coef 135.0000    -1.5226  0.1302    
+                PercentN_SOIL_2023 ~ PercentN_LITTER_2021 + ...      coef 134.5614     0.0027  0.9583    
+              CO2CperHourperg_2023 ~ PercentN_LITTER_2021 + ...      coef 134.9176     0.1247  0.7246    
+     SORU_Biomass_2023 ~ Overall_mineralization_rate_2021 + ...      coef 135.9975     0.5964  0.4413    
+    POPRC_Biomass_2023 ~ Overall_mineralization_rate_2021 + ...      coef 126.3772     0.1562  0.6933    
+    PercentC_SOIL_2023 ~ Overall_mineralization_rate_2021 + ...      coef 124.0039     2.9840  0.0866    
+    PercentN_SORU_2023 ~ Overall_mineralization_rate_2021 + ...      coef  86.6369     1.2537  0.2659    
+    PercentC_SORU_2023 ~ Overall_mineralization_rate_2021 + ...      coef  70.4225     0.4324  0.5129    
+   PercentC_POPRC_2023 ~ Overall_mineralization_rate_2021 + ...      coef 137.0000     2.7414  0.0069  **
+   PercentN_POPRC_2023 ~ Overall_mineralization_rate_2021 + ...      coef 137.0000     3.2663  0.0014  **
+   PlantDiversity_2023 ~ Overall_mineralization_rate_2021 + ...      coef 135.0000    -1.1729  0.2429    
+    PercentN_SOIL_2023 ~ Overall_mineralization_rate_2021 + ...      coef 128.5219     2.5182  0.1150    
+  PercentN_LITTER_2023 ~ Overall_mineralization_rate_2021 + ...      coef 129.2677     0.0073  0.9322    
+  CO2CperHourperg_2023 ~ Overall_mineralization_rate_2021 + ...      coef 135.0729     0.0475  0.8279    
+                   POPRC_Biomass_2023 ~ SORU_Biomass_2023 + ...      coef 101.4165    35.3775  0.0000 ***
+     Overall_mineralization_rate_2023 ~ SORU_Biomass_2023 + ...      coef 111.5812     1.9884  0.1613    
+                  PercentC_POPRC_2023 ~ SORU_Biomass_2023 + ...      coef 134.0000    -2.5035  0.0135   *
+                  PercentN_POPRC_2023 ~ SORU_Biomass_2023 + ...      coef 134.0000    -1.6683  0.0976    
+                   PercentN_SOIL_2023 ~ SORU_Biomass_2023 + ...      coef 110.8301     2.7397  0.1007    
+                 PercentN_LITTER_2023 ~ SORU_Biomass_2023 + ...      coef 129.2049     0.7453  0.3896    
+                 CO2CperHourperg_2023 ~ SORU_Biomass_2023 + ...      coef 132.1419     3.2769  0.0725    
+                  PercentC_SOIL_2023 ~ POPRC_Biomass_2023 + ...      coef 132.1187     0.7767  0.3798    
+    Overall_mineralization_rate_2023 ~ POPRC_Biomass_2023 + ...      coef 132.9130     0.5357  0.4655    
+                  PercentN_SORU_2023 ~ POPRC_Biomass_2023 + ...      coef 133.5875     0.5018  0.4799    
+                  PercentC_SORU_2023 ~ POPRC_Biomass_2023 + ...      coef 131.1128     0.5790  0.4481    
+                 PlantDiversity_2023 ~ POPRC_Biomass_2023 + ...      coef 132.0000    -5.5456  0.0000 ***
+                  PercentN_SOIL_2023 ~ POPRC_Biomass_2023 + ...      coef 133.9725     0.5211  0.4716    
+                PercentN_LITTER_2023 ~ POPRC_Biomass_2023 + ...      coef 132.9935     0.3630  0.5479    
+                CO2CperHourperg_2023 ~ POPRC_Biomass_2023 + ...      coef 132.0344     1.4353  0.2330    
+    Overall_mineralization_rate_2023 ~ PercentC_SOIL_2023 + ...      coef 131.9358     0.6927  0.4068    
+                  PercentN_SORU_2023 ~ PercentC_SOIL_2023 + ...      coef 125.7618     1.7747  0.1852    
+                  PercentC_SORU_2023 ~ PercentC_SOIL_2023 + ...      coef 126.0928     1.3984  0.2392    
+                 PercentC_POPRC_2023 ~ PercentC_SOIL_2023 + ...      coef 132.0000    -0.2320  0.8169    
+                 PercentN_POPRC_2023 ~ PercentC_SOIL_2023 + ...      coef 132.0000     1.1071  0.2703    
+                  PercentN_SOIL_2023 ~ PercentC_SOIL_2023 + ...      coef 115.6697   265.7508  0.0000 ***
+                PercentN_LITTER_2023 ~ PercentC_SOIL_2023 + ...      coef 130.8780     0.0380  0.8458    
+    PercentN_SORU_2023 ~ Overall_mineralization_rate_2023 + ...      coef 131.2470     0.0742  0.7857    
+    PercentC_SORU_2023 ~ Overall_mineralization_rate_2023 + ...      coef 130.8032     0.0619  0.8039    
+   PercentC_POPRC_2023 ~ Overall_mineralization_rate_2023 + ...      coef 132.0000    -1.2959  0.1973    
+   PercentN_POPRC_2023 ~ Overall_mineralization_rate_2023 + ...      coef 132.0000     0.3450  0.7307    
+   PlantDiversity_2023 ~ Overall_mineralization_rate_2023 + ...      coef 130.0000     0.7116  0.4780    
+  PercentN_LITTER_2023 ~ Overall_mineralization_rate_2023 + ...      coef 130.9893     1.1821  0.2789    
+                  PercentC_SORU_2023 ~ PercentN_SORU_2023 + ...      coef 135.7154   974.1787  0.0000 ***
+                 PercentC_POPRC_2023 ~ PercentN_SORU_2023 + ...      coef 135.0000     0.4514  0.6524    
+                 PercentN_POPRC_2023 ~ PercentN_SORU_2023 + ...      coef 135.0000    -0.7654  0.4454    
+                 PlantDiversity_2023 ~ PercentN_SORU_2023 + ...      coef 134.0000     1.0956  0.2752    
+                  PercentN_SOIL_2023 ~ PercentN_SORU_2023 + ...      coef 132.3151     0.0015  0.9688    
+                CO2CperHourperg_2023 ~ PercentN_SORU_2023 + ...      coef 132.1282     0.6405  0.4250    
+                 PercentC_POPRC_2023 ~ PercentC_SORU_2023 + ...      coef 135.0000     0.5481  0.5845    
+                 PercentN_POPRC_2023 ~ PercentC_SORU_2023 + ...      coef 135.0000    -1.2206  0.2244    
+                 PlantDiversity_2023 ~ PercentC_SORU_2023 + ...      coef 134.0000     1.2105  0.2282    
+                  PercentN_SOIL_2023 ~ PercentC_SORU_2023 + ...      coef 132.0072     0.4927  0.4840    
+                PercentN_LITTER_2023 ~ PercentC_SORU_2023 + ...      coef 132.4576     2.2668  0.1346    
+                CO2CperHourperg_2023 ~ PercentC_SORU_2023 + ...      coef 131.5973     0.0001  0.9920    
+                PercentN_POPRC_2023 ~ PercentC_POPRC_2023 + ...      coef 136.0000     6.2913  0.0000 ***
+                PlantDiversity_2023 ~ PercentC_POPRC_2023 + ...      coef 133.0000     1.1779  0.2409    
+                 PercentN_SOIL_2023 ~ PercentC_POPRC_2023 + ...      coef 130.9122     0.0464  0.8298    
+               PercentN_LITTER_2023 ~ PercentC_POPRC_2023 + ...      coef 131.3190     0.4837  0.4880    
+               CO2CperHourperg_2023 ~ PercentC_POPRC_2023 + ...      coef 131.0172     2.8951  0.0912    
+                PlantDiversity_2023 ~ PercentN_POPRC_2023 + ...      coef 133.0000     0.2838  0.7770    
+                 PercentN_SOIL_2023 ~ PercentN_POPRC_2023 + ...      coef 129.4261     0.0070  0.9337    
+               CO2CperHourperg_2023 ~ PercentN_POPRC_2023 + ...      coef 130.4727     0.2432  0.6227    
+                 PercentN_SOIL_2023 ~ PlantDiversity_2023 + ...      coef 114.1716     0.1230  0.7265    
+               PercentN_LITTER_2023 ~ PlantDiversity_2023 + ...      coef 131.8875     0.2550  0.6144    
+               CO2CperHourperg_2023 ~ PlantDiversity_2023 + ...      coef 132.2781     0.1387  0.7102    
+              CO2CperHourperg_2023 ~ PercentN_LITTER_2023 + ...      coef 132.8370     0.2472  0.6199    
+
+--
+Global goodness-of-fit:
+
+Chi-Squared = 402.305 with P-value = 0 and on 222 degrees of freedom
+Fisher's C = 1143.647 with P-value = 0 and on 402 degrees of freedom
+
+---
+Coefficients:
+
+                          Response                                   Predictor Estimate Std.Error       DF Crit.Value P.Value Std.Estimate    
+                 SORU_Biomass_2023                           SORU_Biomass_2021  -6.8681    5.2921 133.9620    25.9656  0.0000            - ***
+                 SORU_Biomass_2023                           Treatment_PopType        -         -   2.0000     1.0337  0.3585            -    
+                 SORU_Biomass_2023    Treatment_PopType = Herbivore-Behavioral  42.8327   14.4445   4.5824     2.9653  0.0349            -   *
+                 SORU_Biomass_2023 Treatment_PopType = Herbivore-Physiological  43.3356   14.1802   4.2617     3.0561  0.0348            -   *
+                 SORU_Biomass_2023              Treatment_PopType = Vegetation  50.2037   14.2809   4.3920     3.5155  0.0211            -   *
+                POPRC_Biomass_2023                          POPRC_Biomass_2021   7.4986    3.5483 134.1901    14.6540  0.0002            - ***
+                POPRC_Biomass_2023                           Treatment_PopType        -         -   2.0000     2.4439  0.0906            -    
+                POPRC_Biomass_2023              Treatment_PopType = Vegetation  37.3253    6.3093   5.0045     5.9159  0.0020            -  **
+                POPRC_Biomass_2023    Treatment_PopType = Herbivore-Behavioral  44.2648    6.4749   5.4514     6.8364  0.0007            - ***
+                POPRC_Biomass_2023 Treatment_PopType = Herbivore-Physiological  44.8239    6.2146   4.6583     7.2126  0.0011            -  **
+                PercentN_SORU_2023                           SORU_Biomass_2023   0.0082    0.0024  92.8187    10.1780  0.0019       0.3546  **
+                PercentN_SORU_2023                          PercentN_SORU_2021  -0.0213    0.0883 135.7457     0.0554  0.8143       -0.021    
+                PercentC_SORU_2023                           SORU_Biomass_2023   0.1228     0.044  71.8830     6.6588  0.0119       0.2848   *
+                PercentC_SORU_2023                          PercentC_SORU_2021   -0.057    0.1008 137.9983     0.3099  0.5786      -0.0442    
+               PercentC_POPRC_2023                          POPRC_Biomass_2023   0.0397    0.0258 138.0000     1.5409  0.1256         0.13    
+               PercentC_POPRC_2023                         PercentC_POPRC_2021    0.062     0.154 138.0000     0.4025  0.6880       0.0339    
+               PercentN_POPRC_2023                          POPRC_Biomass_2023   0.0012    0.0024 138.0000     0.5048  0.6145       0.0421    
+               PercentN_POPRC_2023                         PercentN_POPRC_2021   0.2419    0.0886 138.0000     2.7294  0.0072       0.2275  **
+                PercentC_SOIL_2023                           SORU_Biomass_2023  -0.0971    0.1342 122.5501     3.2380  0.0744            -    
+                PercentC_SOIL_2023                        CO2CperHourperg_2023   0.0037     0.002 134.0600    35.4874  0.0000            - ***
+                PercentC_SOIL_2023                          PercentC_SOIL_2021   0.6621    0.1088 125.4986    18.2695  0.0000            - ***
+                PercentC_SOIL_2023                           Treatment_PopType        -         -   2.0000     0.7655  0.4671            -    
+                PercentC_SOIL_2023    Treatment_PopType = Herbivore-Behavioral   3.5117     0.254   5.0665    13.8256  0.0000            - ***
+                PercentC_SOIL_2023 Treatment_PopType = Herbivore-Physiological   3.6044    0.2437   4.3206    14.7922  0.0001            - ***
+                PercentC_SOIL_2023              Treatment_PopType = Vegetation   3.7015    0.2483   4.7406    14.9080  0.0000            - ***
+                PercentN_SOIL_2023                        PercentN_LITTER_2023  -0.0214    0.0128 135.9156     0.4419  0.5073            -    
+                PercentN_SOIL_2023                          PercentN_SOIL_2021   0.0093    0.0138 135.5686    16.2404  0.0001            - ***
+                PercentN_SOIL_2023                           Treatment_PopType        -         -   2.0000     1.9928  0.1403            -    
+                PercentN_SOIL_2023    Treatment_PopType = Herbivore-Behavioral   0.2387    0.0247   5.1750     9.6583  0.0002            - ***
+                PercentN_SOIL_2023 Treatment_PopType = Herbivore-Physiological   0.2438    0.0239   4.5131    10.2132  0.0003            - ***
+                PercentN_SOIL_2023              Treatment_PopType = Vegetation   0.2652    0.0242   4.8355    10.9626  0.0001            - ***
+              CO2CperHourperg_2023                          PercentN_SOIL_2023   3.6878    0.6993 136.5989    27.2516  0.0000       0.5067 ***
+              CO2CperHourperg_2023                            average_SOM_2021    0.072    0.0596 128.8043     1.3626  0.2453       0.1551    
+              CO2CperHourperg_2023                        CO2CperHourperg_2021  -0.0458    0.0926 136.6375     0.2396  0.6253      -0.0394    
+               PlantDiversity_2023                          PercentC_SOIL_2023  -0.0182    0.0351 136.0000    -0.5181  0.6052      -0.0611    
+               PlantDiversity_2023                           SORU_Biomass_2023   0.0022     8e-04 136.0000     2.9470  0.0038       0.2737  **
+               PlantDiversity_2023                            average_SOM_2021    0.049    0.0288 136.0000     1.6990  0.0916       0.2056    
+               PlantDiversity_2023                         PlantDiversity_2021   0.1693    0.0848 136.0000     1.9962  0.0479       0.1707   *
+              PercentN_LITTER_2023                         PercentN_POPRC_2023   0.1437    0.0521 134.0104     7.5835  0.0067       0.2034  **
+              PercentN_LITTER_2023                          PercentN_SORU_2023   0.0383    0.0405 136.6829     0.8749  0.3513        0.081    
+              PercentN_LITTER_2023                        PercentN_LITTER_2021  -0.0612    0.0763 136.4450     0.6300  0.4287       -0.065    
+  Overall_mineralization_rate_2023                          PercentN_SOIL_2023  -2.9618    1.5842 131.2126     3.2604  0.0733            -    
+  Overall_mineralization_rate_2023                        CO2CperHourperg_2023  20.9083   11.2533 134.3623     0.1762  0.6753            -    
+  Overall_mineralization_rate_2023            Overall_mineralization_rate_2021  -0.5749    1.3413 126.4516    49.7256  0.0000            - ***
+  Overall_mineralization_rate_2023                           Treatment_PopType        -         -   2.0000     4.2322  0.0165            -   *
+  Overall_mineralization_rate_2023 Treatment_PopType = Herbivore-Physiological  10.3833    2.5695   4.4573     4.0409  0.0125            -   *
+  Overall_mineralization_rate_2023              Treatment_PopType = Vegetation  13.3451    2.6614   5.2165     5.0143  0.0036            -  **
+  Overall_mineralization_rate_2023    Treatment_PopType = Herbivore-Behavioral  14.8524    2.6972   5.3733     5.5065  0.0022            -  **
+
+  Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05
+
+---
+Individual R-squared:
+
+                          Response method Marginal Conditional
+                 SORU_Biomass_2023   none     0.08        0.64
+                POPRC_Biomass_2023   none     0.08        0.43
+                PercentN_SORU_2023   none     0.13        0.33
+                PercentC_SORU_2023   none     0.08        0.25
+               PercentC_POPRC_2023   none     0.02          NA
+               PercentN_POPRC_2023   none     0.05          NA
+                PercentC_SOIL_2023   none     0.39        0.63
+                PercentN_SOIL_2023   none     0.15        0.49
+              CO2CperHourperg_2023   none     0.26        0.60
+               PlantDiversity_2023   none     0.13          NA
+              PercentN_LITTER_2023   none     0.04        0.40
+  Overall_mineralization_rate_2023   none     0.46        0.64

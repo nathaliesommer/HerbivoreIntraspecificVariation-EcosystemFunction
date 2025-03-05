@@ -1,0 +1,75 @@
+                           Response                                   Predictor Estimate Std.Error       DF Crit.Value P.Value Std.Estimate    
+1                 SORU_Biomass_2023                          PercentN_SOIL_2021  -4.6754    4.9057 132.6934     3.9322  0.0494            -   *
+2                 SORU_Biomass_2023                          POPRC_Biomass_2021 -56.1182   28.1142 130.5735     3.1907  0.0764            -    
+3                 SORU_Biomass_2023                          PercentN_SORU_2021   0.1926    0.1077 131.6529    15.0325  0.0002            - ***
+4                 SORU_Biomass_2023                           SORU_Biomass_2021   10.547    2.7104 131.0703    18.3791  0.0000            - ***
+5                 SORU_Biomass_2023                           Treatment_PopType        -         -   2.0000     0.9251  0.3991            -    
+6                 SORU_Biomass_2023    Treatment_PopType = Herbivore-Behavioral   41.823   15.4661   4.4102     2.7042  0.0485            -   *
+7                 SORU_Biomass_2023 Treatment_PopType = Herbivore-Physiological  44.5098   15.2614   4.1841     2.9165  0.0411            -   *
+8                 SORU_Biomass_2023              Treatment_PopType = Vegetation  49.1852   15.3388   4.2782     3.2066  0.0297            -   *
+9                POPRC_Biomass_2023                          POPRC_Biomass_2021   7.5425    3.5078 133.2745    10.3111  0.0017            -  **
+10               POPRC_Biomass_2023                            average_SOM_2021   0.2282    0.0709  89.8156     4.7120  0.0326            -   *
+11               POPRC_Biomass_2023                           Treatment_PopType        -         -   2.0000     2.3838  0.0961            -    
+12               POPRC_Biomass_2023              Treatment_PopType = Vegetation  39.6424    5.5238   5.3446     7.1767  0.0006            - ***
+13               POPRC_Biomass_2023    Treatment_PopType = Herbivore-Behavioral  45.8032    5.6587   5.6454     8.0943  0.0003            - ***
+14               POPRC_Biomass_2023 Treatment_PopType = Herbivore-Physiological  47.1849    5.4178   4.7198     8.7092  0.0004            - ***
+15               PercentN_SORU_2023                           SORU_Biomass_2023   0.0064    0.0025 103.8697     6.0142  0.0159       0.2775   *
+16               PercentN_SORU_2023                         PlantDiversity_2021  -0.5275    0.2032 134.5673     6.6929  0.0107      -0.1881   *
+17               PercentN_SORU_2023                          PercentN_SORU_2021  -0.0042    0.0869 135.9948     0.0023  0.9621      -0.0042    
+18               PercentC_SORU_2023                           SORU_Biomass_2023   0.0932     0.046  80.8070     3.5696  0.0624       0.2163    
+19               PercentC_SORU_2023                         PlantDiversity_2021  -8.3259    4.0373 135.0937     4.2146  0.0420      -0.1585   *
+20               PercentC_SORU_2023                          PercentC_SORU_2021   -0.025    0.1008 136.9730     0.0601  0.8067      -0.0194    
+21              PercentC_POPRC_2023                          POPRC_Biomass_2023   0.0804    0.0332 133.0000     2.4205  0.0168       0.2632   *
+22              PercentC_POPRC_2023                           SORU_Biomass_2023  -0.0192    0.0184 133.0000    -1.0423  0.2992       -0.117    
+23              PercentC_POPRC_2023                         PlantDiversity_2021   4.0334    2.4481 133.0000     1.6476  0.1018       0.2015    
+24              PercentC_POPRC_2023            Overall_mineralization_rate_2021   0.1092    0.0453 133.0000     2.4070  0.0175        0.217   *
+25              PercentC_POPRC_2023                          POPRC_Biomass_2021  -0.0203    0.0346 133.0000    -0.5865  0.5586      -0.0653    
+26              PercentC_POPRC_2023                          PercentC_SOIL_2021   1.0857    0.5153 133.0000     2.1068  0.0370       0.1845   *
+27              PercentC_POPRC_2023                         PercentC_POPRC_2021  -0.0582    0.1504 133.0000    -0.3869  0.6994      -0.0319    
+28              PercentN_POPRC_2023                          POPRC_Biomass_2023    0.004    0.0025 137.0000     1.6242  0.1066       0.1395    
+29              PercentN_POPRC_2023            Overall_mineralization_rate_2021   0.0136    0.0042 137.0000     3.2663  0.0014       0.2883  **
+30              PercentN_POPRC_2023                         PercentN_POPRC_2021    0.176     0.088 137.0000     1.9997  0.0475       0.1655   *
+31               PercentC_SOIL_2023                           SORU_Biomass_2023   0.0018    0.0014 132.0000     1.3532  0.1783            -    
+32               PercentC_SOIL_2023                        CO2CperHourperg_2023   0.6353      0.08 132.0000     7.9395  0.0000            - ***
+33               PercentC_SOIL_2023                        CO2CperHourperg_2021   0.0635    0.1031 132.0000     0.6157  0.5391            -    
+34               PercentC_SOIL_2023                         PercentC_POPRC_2021   0.0362     0.014 132.0000     2.5765  0.0111            -   *
+35               PercentC_SOIL_2023                            average_SOM_2021     0.41    0.0602 132.0000     6.8073  0.0000            - ***
+36               PercentC_SOIL_2023                          PercentC_SOIL_2021   0.1788    0.0669 132.0000     2.6709  0.0085            -  **
+37               PercentC_SOIL_2023                           Treatment_PopType        -         -   2.0000     1.2501  0.2898            -    
+38               PercentC_SOIL_2023 Treatment_PopType = Herbivore-Physiological   3.3401    0.0735 132.0000    45.4572  0.0000            - ***
+39               PercentC_SOIL_2023    Treatment_PopType = Herbivore-Behavioral   3.3683    0.0945 132.0000    35.6429  0.0000            - ***
+40               PercentC_SOIL_2023              Treatment_PopType = Vegetation    3.526    0.0943 132.0000    37.3739  0.0000            - ***
+41               PercentN_SOIL_2023                        PercentN_LITTER_2023  -0.0232    0.0119 133.7025     1.0235  0.3135            -    
+42               PercentN_SOIL_2023                          PercentN_SOIL_2021   0.0133    0.0129 133.2922     5.7516  0.0179            -   *
+43               PercentN_SOIL_2023                            average_SOM_2021   0.1763    0.0729 100.6188    16.9543  0.0001            - ***
+44               PercentN_SOIL_2023                        CO2CperHourperg_2021   0.0291    0.0067 133.9094     0.0938  0.7599            -    
+45               PercentN_SOIL_2023                           Treatment_PopType        -         -   2.0000     2.1502  0.1205            -    
+46               PercentN_SOIL_2023 Treatment_PopType = Herbivore-Physiological   0.2287    0.0188   4.5523    12.1897  0.0001            - ***
+47               PercentN_SOIL_2023    Treatment_PopType = Herbivore-Behavioral   0.2291    0.0195   5.4152    11.7227  0.0000            - ***
+48               PercentN_SOIL_2023              Treatment_PopType = Vegetation   0.2519     0.019   5.1158    13.2252  0.0000            - ***
+49             CO2CperHourperg_2023                          PercentN_SOIL_2023   3.2332    0.6796 131.6508    22.3366  0.0000       0.4443 ***
+50             CO2CperHourperg_2023                            average_SOM_2021   0.0218    0.0588 131.0866     0.1310  0.7180        0.047    
+51             CO2CperHourperg_2023                         PlantDiversity_2021   0.1867    0.1632 130.8870     1.2985  0.2566       0.0967    
+52             CO2CperHourperg_2023                          PercentN_SOIL_2021   1.9394    0.5924 130.5202    10.6486  0.0014       0.2825  **
+53             CO2CperHourperg_2023                         PercentN_POPRC_2021  -0.0311    0.0711 129.6104     0.1910  0.6628      -0.0284    
+54             CO2CperHourperg_2023                          POPRC_Biomass_2021  -0.0029    0.0026 129.8370     1.3148  0.2536      -0.0979    
+55             CO2CperHourperg_2023                        CO2CperHourperg_2021  -0.0969    0.0885 132.1628     1.1781  0.2797      -0.0835    
+56              PlantDiversity_2023                          PercentC_SOIL_2023  -0.0257    0.0264 129.2029     0.9412  0.3338      -0.0865    
+57              PlantDiversity_2023                           SORU_Biomass_2023  -0.0031     8e-04 131.8867    13.1084  0.0004       -0.375 ***
+58              PlantDiversity_2023                          POPRC_Biomass_2023   -0.012    0.0012 129.2553   101.2354  0.0000      -0.7933 ***
+59              PlantDiversity_2023                          PercentN_SORU_2021   -0.033    0.0256 131.1416     1.6307  0.2039      -0.0919    
+60              PlantDiversity_2023                            average_SOM_2021  -0.0397    0.0273 131.9888     2.0584  0.1537      -0.1666    
+61              PlantDiversity_2023                         PlantDiversity_2021    0.049    0.0639 128.6833     0.5862  0.4453       0.0494    
+62              PlantDiversity_2023            Overall_mineralization_rate_2021   0.0056    0.0023 131.9643     5.7835  0.0176       0.2236   *
+63              PlantDiversity_2023                        PercentN_LITTER_2021  -0.0897    0.0437 129.3929     4.1887  0.0427      -0.1273   *
+64             PercentN_LITTER_2023                         PercentN_POPRC_2023   0.1437    0.0521 134.0104     7.5835  0.0067       0.2034  **
+65             PercentN_LITTER_2023                          PercentN_SORU_2023   0.0383    0.0405 136.6829     0.8749  0.3513        0.081    
+66             PercentN_LITTER_2023                        PercentN_LITTER_2021  -0.0612    0.0763 136.4450     0.6300  0.4287       -0.065    
+67 Overall_mineralization_rate_2023                          PercentN_SOIL_2023  -3.0665    1.5659 131.9460     2.4620  0.1190            -    
+68 Overall_mineralization_rate_2023                        CO2CperHourperg_2023  18.0579   11.2223 133.7581     0.1225  0.7268            -    
+69 Overall_mineralization_rate_2023                         PercentN_POPRC_2021  -0.4738    1.3283 131.3263     3.9922  0.0478            -   *
+70 Overall_mineralization_rate_2023            Overall_mineralization_rate_2021      2.3    1.1478 128.2865    49.6245  0.0000            - ***
+71 Overall_mineralization_rate_2023                           Treatment_PopType        -         -   2.0000     4.2913  0.0156            -   *
+72 Overall_mineralization_rate_2023 Treatment_PopType = Herbivore-Physiological  10.3263     2.661   4.4144     3.8805  0.0148            -   *
+73 Overall_mineralization_rate_2023              Treatment_PopType = Vegetation  13.3928    2.7471   5.0865     4.8752  0.0044            -  **
+74 Overall_mineralization_rate_2023    Treatment_PopType = Herbivore-Behavioral  14.7161    2.7822   5.2424     5.2894  0.0028            -  **
