@@ -6,68 +6,63 @@
 
 library(ggdag)
 library(ggplot2)
+library(dplyr)
 
 # Define paths
-# Initial model: notes
 dag <- dagify(
-  SORUbiomass ~ Treatment_PopType,
-  POPRCbiomass ~ Treatment_PopType,
-  SORUN ~ SORUbiomass, #y
-  SORUC ~ SORUbiomass, #y
-  POPRCC ~ POPRCbiomass, #y
-  POPRCN ~ POPRCbiomass, #y
-  #LitterC ~ SORUC + POPRCC + MISCC, # removed for singularity + lack of interesting/relevant paths
-  LitterN ~ POPRCN + SORUN, #y
-  SoilC ~ Treatment_PopType + SORUbiomass + SIR, # removed SOM for collinearity and LitterC for poor fit
-  SoilN ~ Treatment_PopType + LitterN, #y
-  SIR ~ SoilN + SOM, #y
-  #Decomp ~ SIR + LitterN, # removed decomp for poor field proxy
-  PlantDiversity ~ SoilC + SOM + SORUbiomass, #y removed SoilN for multicollinearity
-  Nmin ~ SoilN + SIR #y (removed SOM for poor fit)
-)
-
-# Define paths
-# Additions from directed separation tests
-dag <- dagify(
-  SORU_biomass ~ Treatment_PopType +
-    SOIL_N_baseline + # added from DST
-    POPRC_biomass_baseline + # added from DST
-    SORU_N_baseline, # added from DST
-  POPRC_biomass ~ Treatment_PopType +
-    SOM, # added from DST
-  SORU_N ~ SORU_biomass +
-    PlantDiversity_baseline, # added from DST
-  SORU_C ~ SORU_biomass +
-    PlantDiversity_baseline, # added from DST
-  POPRC_C ~ POPRC_biomass +
-    SORU_biomass + # added from DST
-    PlantDiversity_baseline + # added from DST
-    Nmin_baseline + # added from DST
-    POPRC_biomass_baseline +  + # added from DST
-    SOIL_C_baseline, # added from DST
-  POPRC_N ~ POPRC_biomass +
-    Nmin_baseline, # added from DST
-  Litter_N ~ POPRC_N + SORU_N,
-  Soil_C ~ Treatment_PopType + 
-    SORU_biomass + 
-    SIR +
-    SOM + # added from DST
-    SIR_baseline + # added from DST
-    POPRC_C_baseline, # added from DST
-  Soil_N ~ Treatment_PopType + LitterN,
-  SIR ~ Soil_N + SOM,
-  PlantDiversity ~ Soil_C + 
-    SOM + 
-    SORU_biomass + 
-    POPRC_biomass + # added from DST
-    SORU_N_baseline + # added from DST
-    Nmin_baseline + # added from DST
-    Litter_N_baseline, # added from DST
-  Nmin ~ Soil_N + 
-    SIR + 
-    Treatment_PopType + # added from DST and hopper egestion theory
-    PlantDiversity_baseline +  # added from DST
-    POPRC_N_baseline  # added from DST
+  SORU_biomass ~ Treatment_PopType,
+  SORU_biomass ~ SOIL_N_baseline,  # added from DST
+  SORU_biomass ~ POPRC_biomass_baseline,  # added from DST
+  SORU_biomass ~ SORU_N_baseline,  # added from DST
+  
+  POPRC_biomass ~ Treatment_PopType,
+  POPRC_biomass ~ SOM,  # added from DST
+  
+  SORU_N ~ SORU_biomass,
+  SORU_N ~ PlantDiversity_baseline,  # added from DST
+  
+  SORU_C ~ SORU_biomass,
+  SORU_C ~ PlantDiversity_baseline,  # added from DST
+  
+  POPRC_C ~ POPRC_biomass,
+  POPRC_C ~ SORU_biomass,  # added from DST
+  POPRC_C ~ PlantDiversity_baseline,  # added from DST
+  POPRC_C ~ Nmin_baseline,  # added from DST
+  POPRC_C ~ POPRC_biomass_baseline,  # added from DST
+  POPRC_C ~ SOIL_C_baseline,  # added from DST
+  
+  POPRC_N ~ POPRC_biomass,
+  POPRC_N ~ Nmin_baseline,  # added from DST
+  
+  Litter_N ~ POPRC_N,
+  Litter_N ~ SORU_N,
+  
+  Soil_C ~ Treatment_PopType,
+  Soil_C ~ SORU_biomass,
+  Soil_C ~ SIR,
+  Soil_C ~ SOM,  # added from DST
+  Soil_C ~ SIR_baseline,  # added from DST
+  Soil_C ~ POPRC_C_baseline,  # added from DST
+  
+  Soil_N ~ Treatment_PopType,
+  Soil_N ~ LitterN,
+  
+  SIR ~ Soil_N,
+  SIR ~ SOM,
+  
+  PlantDiversity ~ Soil_C,
+  PlantDiversity ~ SOM,
+  PlantDiversity ~ SORU_biomass,
+  PlantDiversity ~ POPRC_biomass,  # added from DST
+  PlantDiversity ~ SORU_N_baseline,  # added from DST
+  PlantDiversity ~ Nmin_baseline,  # added from DST
+  PlantDiversity ~ Litter_N_baseline,  # added from DST
+  
+  Nmin ~ Soil_N,
+  Nmin ~ SIR,
+  Nmin ~ Treatment_PopType,  # added from DST and hopper egestion theory
+  Nmin ~ PlantDiversity_baseline,  # added from DST
+  Nmin ~ POPRC_N_baseline  # added from DST
 )
 
 ggdag(dag, text = FALSE) + 
@@ -86,16 +81,13 @@ ggdag(dag, text = FALSE) +
 # SoilPlantCN.R: CNdata
 # LOI.R: SOM_data 
 
-# Load necessary libraries
+# Load libraries
 library(dplyr)
 library(tidyr)
 
 ### Join data frames ----
 
 # Prepare data from each script
-decomp_data <- combined_decomp %>%
-  rename(Sample_ID = CageID) %>%
-  dplyr::select(Sample_ID, Population, MassLoss, Year)
 
 sir_data <- SIR_final_data %>%
   mutate(Population = substr(Sample_ID, 1, 2)) %>%  # Add Population column
@@ -108,7 +100,7 @@ n_min_data <- N_min_full_data %>%
 
 veg_biomass_data <- functional_groups_wide %>%
   rename(Sample_ID = Cage.ID) %>%
-  dplyr::select(Sample_ID, Year, Population, Treatment, Transplant, Site, SORU_Biomass, POPRC_Biomass, MISC_Biomass)
+  dplyr::select(Sample_ID, Site, Year, Population, Treatment, Transplant, Site, SORU_Biomass, POPRC_Biomass, MISC_Biomass)
 
 diversity_data <- combined_diversity_long %>%
   rename(Sample_ID = Cage.ID) %>%
@@ -124,7 +116,6 @@ som_data <- SOM_data %>%
 
 # Define potential response variables
 response_vars <- c(
-  "MassLoss",
   "CO2CperHourperg",
   "Overall_mineralization_rate",
   "SORU_Biomass",
@@ -145,16 +136,19 @@ response_vars <- c(
 )
 
 # Combine all data frames
-combined_data <- decomp_data %>%
+combined_data <- veg_biomass_data %>%
   mutate(Year = as.character(Year)) %>%
-  left_join(sir_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
-  left_join(n_min_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
-  left_join(veg_biomass_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
-  left_join(diversity_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
-  left_join(cn_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year", "Population")) %>%
-  left_join(som_data %>% mutate(Year = as.character(Year)), by = c("Sample_ID", "Year")) %>%
-  # Ensure Site column is present
-  mutate(Site = coalesce(Site.x, Site.y, Site)) %>%
+  # Join with other datasets
+  left_join(sir_data %>% mutate(Year = as.character(Year)), 
+            by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(n_min_data %>% mutate(Year = as.character(Year)),
+            by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(diversity_data %>% mutate(Year = as.character(Year)), 
+            by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(cn_data %>% mutate(Year = as.character(Year)), 
+            by = c("Sample_ID", "Year", "Population")) %>%
+  left_join(som_data %>% mutate(Year = as.character(Year)), 
+            by = c("Sample_ID", "Year")) %>%
   # Create a composite Treatment_PopType variable
   mutate(Treatment_PopType = case_when(
     Treatment == "Vegetation" ~ Treatment,
@@ -180,6 +174,7 @@ final_data_year$Treatment_PopType <- relevel(final_data_year$Treatment_PopType, 
 final_data_year <- final_data_year %>% 
   filter(!Sample_ID %in% c("DCS_H3", "FNN_H8", "SCH_V2"))
 
+# Check
 final_data_year %>% group_by(Sample_ID) %>%
   filter(n() > 1) %>%
   ungroup() %>% print()
@@ -429,7 +424,7 @@ print(vif_values) # good
 
 plot(SORUN_model) # okay
 simulation_output <- simulateResiduals(fittedModel = SORUN_model)
-plot(simulation_output) # not good
+plot(simulation_output) # not good, warning message expected here
 testDispersion(simulation_output) # good
 testZeroInflation(simulation_output) # zero-inflated
 
@@ -449,8 +444,9 @@ VarCorr(SORUN_model)
 boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lmer(PercentN_SORU_2023 ~ 
-                SORU_Biomass_2023 + 
-                PercentN_SORU_2021 + 
+                SORU_Biomass_2023 +
+                PlantDiversity_2021 +
+                PercentN_SORU_2021 +
                 (1 | Site), 
               data = d)
   return(fixef(mod))
@@ -459,8 +455,6 @@ boot_fun <- function(data, indices) {
 set.seed(1231)
 
 boot_model <- boot(final_data_year, boot_fun, R = 1000)
-
-
 
 # 1. Extract original confidence intervals
 original_ci <- confint(SORUN_model, parm = names(fixef(SORUN_model)), level = 0.95)
@@ -476,8 +470,8 @@ boot_ci_table <- data.frame(
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
 for (i in seq_along(fixef(SORUN_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
+  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)
+  if (!is.null(boot_ci_i$percent)) {
     boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
     boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
   } else {
@@ -536,7 +530,7 @@ print(vif_values) # good
 
 plot(SORUC_model) # okay
 simulation_output <- simulateResiduals(fittedModel = SORUC_model)
-plot(simulation_output) # not great
+plot(simulation_output) # not great, warning expected
 testDispersion(simulation_output) # fine
 testZeroInflation(simulation_output) # zero-inflated
 
@@ -810,6 +804,7 @@ boot_fun <- function(data, indices) {
   d <- data[indices, ]  # resample
   mod <- lm(PercentN_POPRC_2023 ~ 
               POPRC_Biomass_2023 + 
+              Overall_mineralization_rate_2021 +
               PercentN_POPRC_2021,
             data = d)
   return(coef(mod))  # return coefficients for lm objects
@@ -822,7 +817,7 @@ set.seed(1231)
 boot_model <- boot(final_data_year, boot_fun, R = 1000) 
 
 # 1. Extract original confidence intervals for lm model using `coef()`
-original_ci <- confint(POPRCN_model, parm = names(coef(POPRCN_model)), level = 0.95)
+original_ci <- confint(POPRCN_model, level = 0.95)
 original_ci <- as.data.frame(original_ci)
 colnames(original_ci) <- c("Original_Lower", "Original_Upper")
 
@@ -835,15 +830,15 @@ boot_ci_table <- data.frame(
 
 # 3. Iterate over fixed effects to get bootstrapped CIs
 for (i in seq_along(coef(POPRCN_model))) {
-  boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)  # bootstrapped CI for all fixed effects
-  if (!is.null(boot_ci_i$percent)) {  # ensure boot.ci returned valid percentiles
-    boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4] 
-    boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
-  } else {
-    # error handling
-    boot_ci_table$Boot_Lower[i] <- NA
-    boot_ci_table$Boot_Upper[i] <- NA
-  }
+  tryCatch({
+    boot_ci_i <- boot.ci(boot_model, type = "perc", index = i)
+    if (!is.null(boot_ci_i$percent)) {
+      boot_ci_table$Boot_Lower[i] <- boot_ci_i$percent[4]
+      boot_ci_table$Boot_Upper[i] <- boot_ci_i$percent[5]
+    }
+  }, error = function(e) {
+    warning(paste("Could not compute CI for coefficient", i))
+  })
 }
 
 # 4. Error handling: Ensure that both tables have the same number of rows
@@ -866,13 +861,6 @@ print(ci_comparison)
 
 # Print bootstrapped fixed effects comparison
 print(boot_summary) 
-
-
-
-
-
-
-
 
 
 
@@ -913,8 +901,7 @@ SoilN_model_noRE <- lm(PercentN_SOIL_2023 ~
                          PercentN_LITTER_2023 + 
                          PercentN_SOIL_2021 + 
                          average_SOM_2021 +
-                         CO2CperHourperg_2021 +
-                         (1 | Site), 
+                         CO2CperHourperg_2021, 
                        data = final_data_year)
 
 anova(SoilN_model, SoilN_model_noRE)
@@ -938,9 +925,7 @@ boot_fun <- function(data, indices) {
 
 set.seed(1231)
 
-boot_model <- boot(final_data_year, boot_fun, R = 1000)
-
-
+boot_model <- boot(final_data_year, boot_fun, R = 1000) # warning expected
 
 
 # 1. Extract original confidence intervals
@@ -1516,8 +1501,7 @@ Nmin_model_noRE <- lm(Overall_mineralization_rate_2023 ~
                         PercentN_SOIL_2023 + 
                         CO2CperHourperg_2023 + 
                         PercentN_POPRC_2021 +
-                        Overall_mineralization_rate_2021 +
-                        (1 | Site), 
+                        Overall_mineralization_rate_2021,
                       data = final_data_year)
 
 anova(Nmin_model, Nmin_model_noRE)
@@ -1796,35 +1780,7 @@ write.table(indirect_effects_df, file = output_file, row.names = FALSE, col.name
 
 library(DiagrammeR)
 
-
-#### Herbivory ----
-
-filtered_coefficients_herbivory <- filtered_coefficients %>%
-  select(c(Response, Predictor, Estimate)) %>%
-  filter(!is.na(Estimate)) %>%
-  group_by(Response) %>%
-  # Average the estimates for the herbivore types
-  mutate(
-    Estimate = ifelse(
-      Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological"),
-      mean(Estimate[Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological")]),
-      Estimate
-    ),
-    Predictor = ifelse(
-      Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological"),
-      "Herbivore",
-      Predictor
-    )
-  ) %>%
-  # Filter to include "2021" predictors only if they have the highest estimate
-  filter(
-    !grepl("2021$", Predictor) | 
-    (grepl("2021$", Predictor) & Estimate == max(Estimate)) %>%
-  # Remove duplicate rows after averaging
-  distinct())
-
-
-  # Define the mapping for labels
+# Define the mapping for labels
 label_mapping <- c(
   "SORU_Biomass_2023" = "Goldenrod biomass",
   "POPRC_Biomass_2023" = "Grass biomass",
@@ -1854,6 +1810,124 @@ label_mapping <- c(
   "PercentN_LITTER_2021" = "Baseline litter %N",
   "Overall_mineralization_rate_2021" = "Baseline nitrogen mineralization"
 )
+
+#### Basic Significant Paths ----
+
+# Define the mapping for labels (Plasticity version)
+plasticity_label_mapping <- c(
+  "SORU_Biomass_2023" = "Goldenrod biomass",
+  "POPRC_Biomass_2023" = "Grass biomass",
+  "PercentN_SORU_2023" = "Goldenrod %N",
+  "PercentC_SORU_2023" = "Goldenrod %C",
+  "PercentN_POPRC_2023" = "Grass %N",
+  "PercentC_POPRC_2023" = "Grass %C",
+  "PercentC_SOIL_2023" = "Soil %C",
+  "PercentN_SOIL_2023" = "Soil %N",
+  "CO2CperHourperg_2023" = "SIR",
+  "PlantDiversity_2023" = "Plant diversity",
+  "PercentN_LITTER_2023" = "Litter %N",
+  "Overall_mineralization_rate_2023" = "Nitrogen mineralization",
+  "Treatment_PopType = Herbivore-Behavioral" = "Reactors",
+  "Treatment_PopType = Herbivore-Physiological" = "Resistors",
+  "Treatment_PopType = Vegetation" = "Vegetation",
+  "average_SOM_2021" = "Baseline SOM",
+  "SORU_Biomass_2021" = "Baseline goldenrod biomass",
+  "POPRC_Biomass_2021" = "Baseline grass biomass",
+  "PercentN_SORU_2021" = "Baseline goldenrod %N",
+  "PercentC_SORU_2021" = "Baseline goldenrod %C",
+  "PercentN_POPRC_2021" = "Baseline grass %N",
+  "PercentC_POPRC_2021" = "Baseline grass %C",
+  "PercentC_SOIL_2021" = "Baseline soil %C",
+  "PercentN_SOIL_2021" = "Baseline soil %N",
+  "CO2CperHourperg_2021" = "Baseline SIR",
+  "PlantDiversity_2021" = "Baseline plant diversity",
+  "PercentN_LITTER_2021" = "Baseline litter %N",
+  "Overall_mineralization_rate_2021" = "Baseline nitrogen mineralization"
+)
+
+# Clean up the data frame and apply label mapping
+clean_coefficients <- data.frame(
+  Predictor = filtered_coefficients$Predictor,
+  Response = filtered_coefficients$Response,
+  Estimate = filtered_coefficients$Estimate,
+  stringsAsFactors = FALSE
+) %>%
+  filter(!is.na(Predictor) & !is.na(Response) & !is.na(Estimate)) %>%
+  mutate(
+    Predictor_Label = plasticity_label_mapping[Predictor],
+    Response_Label = plasticity_label_mapping[Response],
+    # Calculate penwidth based on absolute effect size
+    Penwidth = (abs(Estimate) / max(abs(Estimate))) * 6 + 1  # Scale from 1 to 7
+  )
+
+# Create basic dot script
+basic_dot_script <- paste0(
+  "digraph SEM_PathDiagram { \n",
+  "  rankdir=LR;\n",
+  "  node [shape=rectangle];\n",
+  "  splines=true;\n",
+  
+  # Add baseline nodes with gray fill
+  paste0("  \"", unique(grep("Baseline", clean_coefficients$Predictor_Label, value=TRUE)), 
+         "\" [style=filled, fillcolor=gray85];\n", collapse=""),
+  "\n",
+  
+  # Add edges with dotted lines for negative effects and scaled width
+  paste0("  \"", clean_coefficients$Predictor_Label, "\" -> \"", 
+         clean_coefficients$Response_Label, "\" [label=\" ", 
+         round(clean_coefficients$Estimate, 2),
+         "\"", 
+         ifelse(clean_coefficients$Estimate < 0, ", style=dashed", ""),
+         ", penwidth=", round(clean_coefficients$Penwidth, 2),
+         "];\n",
+         collapse = ""),
+  
+  "}"
+)
+
+# Render the plasticity plot
+grViz(basic_dot_script)
+
+
+#### Herbivory ----
+
+filtered_coefficients_herbivory <- filtered_coefficients %>%
+  select(c(Response, Predictor, Estimate)) %>%
+  filter(!is.na(Estimate)) %>%
+  # First group by Response to handle the herbivore types averaging
+  group_by(Response) %>%
+  mutate(
+    Estimate = ifelse(
+      Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological"),
+      mean(Estimate[Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological")]),
+      Estimate
+    ),
+    Predictor = ifelse(
+      Predictor %in% c("Treatment_PopType = Herbivore-Behavioral", "Treatment_PopType = Herbivore-Physiological"),
+      "Herbivore",
+      Predictor
+    )
+  ) %>%
+  ungroup() %>%
+  # Now filter baseline variables
+  group_by(Response) %>%
+  filter(
+    # Keep non-baseline variables
+    !grepl("2021$", Predictor) |
+    # Or keep baseline variables only if their absolute effect size is greater than non-baseline effects
+    (grepl("2021$", Predictor) & abs(Estimate) >= {
+      non_baseline_estimates <- abs(Estimate[!grepl("2021$", Predictor)])
+      if(length(non_baseline_estimates) > 0) {
+        max(non_baseline_estimates) + 1
+      } else {
+        -Inf  # If no non-baseline predictors, keep all baseline predictors
+      }
+    })
+  ) %>%
+  distinct(Response, Predictor, .keep_all = TRUE)
+
+
+
 
 # Apply label mapping to predictors and responses
 filtered_coefficients_herbivory_mapped <- filtered_coefficients_herbivory %>%
@@ -1911,6 +1985,15 @@ filtered_coefficients_herbivory_mapped <- filtered_coefficients_herbivory_mapped
   mutate(
     Penwidth = (Absolute_Estimate / max_abs_estimate) * (max_penwidth - min_penwidth) + min_penwidth
   )
+
+# Function to determine edge color based on Estimate
+get_edge_color <- function(estimate) {
+  if (estimate < 0) {
+    return("red")
+  } else {
+    return("black")
+  }
+}
 
 # Function to find all downstream nodes and paths
 find_downstream_paths <- function(start_nodes, all_paths) {
@@ -1988,7 +2071,7 @@ dot_script <- paste0(dot_script, "}")
 # Render the graph using grViz
 grViz(dot_script)
 
-### Plasticity ----
+#### Plasticity ----
 
 filtered_coefficients_plasticity <- filtered_coefficients %>%
   select(c(Response, Predictor, Estimate)) %>%
@@ -2194,12 +2277,166 @@ dot_script <- paste0(dot_script, "}")
 # Render the graph using grViz
 grViz(dot_script)
 
-# Function to determine edge color based on Estimate
-get_edge_color <- function(estimate) {
-  if (estimate < 0) {
-    return("red")
-  } else {
-    return("black")
-  }
+
+### Pretty SEM Plots ----
+
+## Herbivory SEM (Pretty) ----
+
+# Define custom colors for treatments
+treatment_colors <- c(
+  "Herbivore" = "#B5753C",    # Brown
+  "Vegetation" = "#9BA48C"     # Green
+)
+
+# Calculate penwidths (using the largest absolute effect as reference)
+scale_penwidth <- function(value) {
+  abs_value <- abs(value)
+  min_width <- 1
+  max_width <- 7
+  max_effect <- 46.49  # Largest effect in the herbivory model
+  
+  scaled <- (abs_value / max_effect) * (max_width - min_width) + min_width
+  return(scaled)
 }
 
+treatment_dot_script <- "digraph SEM_PathDiagram { 
+  rankdir=TB;
+  node [shape=rectangle, style=filled, fontname=\"Arial\"];
+  splines=true;
+  
+  # Define node ranks
+  { rank=source; \"Baseline goldenrod biomass\"; \"Herbivore\"; \"Baseline grass biomass\"; \"Vegetation\"; \"Baseline soil %N\" }
+  { rank=same; \"Goldenrod biomass\"; \"Grass biomass\"; \"Soil %N\" }
+  { rank=same; \"Plant diversity\"; \"SIR\" }
+  { rank=same; \"Grass %C\"; \"Goldenrod %N\"; \"Nitrogen mineralization\" }
+  { rank=sink; \"Soil %C\" }
+  
+  # Treatment nodes
+  \"Herbivore\" [fillcolor=\"#B5753C\", fontcolor=\"white\"];
+  \"Vegetation\" [fillcolor=\"#9BA48C\", fontcolor=\"white\"];
+  
+  # Baseline nodes
+  \"Baseline goldenrod biomass\" [fillcolor=\"#A8A8A8\"];
+  \"Baseline grass biomass\" [fillcolor=\"#A8A8A8\"];
+  \"Baseline soil %N\" [fillcolor=\"#A8A8A8\"];
+  
+  # Response nodes
+  \"Grass biomass\" [fillcolor=\"#F0F0F0\"];
+  \"Goldenrod biomass\" [fillcolor=\"#F0F0F0\"];
+  \"Soil %N\" [fillcolor=\"#F0F0F0\"];
+  \"Soil %C\" [fillcolor=\"#F0F0F0\"];
+  \"Plant diversity\" [fillcolor=\"#F0F0F0\"];
+  \"Grass %C\" [fillcolor=\"#F0F0F0\"];
+  \"Goldenrod %N\" [fillcolor=\"#F0F0F0\"];
+  \"SIR\" [fillcolor=\"#F0F0F0\"];
+  \"Nitrogen mineralization\" [fillcolor=\"#F0F0F0\"];
+  
+  # Treatment effects - Herbivore (Brown)
+  \"Herbivore\" -> \"Goldenrod biomass\" [color=\"#B5753C\", label=\" 43.17\", penwidth=6.51];
+  \"Herbivore\" -> \"Grass biomass\" [color=\"#B5753C\", label=\" 46.49\", penwidth=7.00];
+  \"Herbivore\" -> \"Nitrogen mineralization\" [color=\"#B5753C\", label=\" 0.52\", penwidth=1.08];
+  
+  # Treatment effects - Vegetation (Green)
+  \"Vegetation\" -> \"Grass biomass\" [color=\"#9BA48C\", label=\" 39.64\", penwidth=6.02];
+  \"Vegetation\" -> \"Soil %N\" [color=\"#9BA48C\", label=\" 0.25\", penwidth=1.04];
+  \"Vegetation\" -> \"Nitrogen mineralization\" [color=\"#9BA48C\", label=\" 13.39\", penwidth=2.73];
+  
+  # Baseline effects
+  \"Baseline soil %N\" -> \"Soil %N\" [color=\"black\", label=\" 2.30\", penwidth=1.35];
+  \"Baseline grass biomass\" -> \"Grass biomass\" [color=\"black\", label=\" 7.54\", penwidth=1.97];
+  \"Baseline goldenrod biomass\" -> \"Goldenrod biomass\" [color=\"black\", label=\" 10.55\", penwidth=2.36];
+  
+  # Downstream effects (brown color)
+  \"Grass biomass\" -> \"Plant diversity\" [color=\"#A18D6B\", label=\" -0.01\", penwidth=1.00, style=\"dashed\"];
+  \"Grass biomass\" -> \"Grass %C\" [color=\"#A18D6B\", label=\" 0.08\", penwidth=1.01];
+  \"Goldenrod biomass\" -> \"Plant diversity\" [color=\"#A18D6B\", label=\" -0.09\", penwidth=1.01, style=\"dashed\"];
+  \"Goldenrod biomass\" -> \"Goldenrod %N\" [color=\"#A18D6B\", label=\" 0.01\", penwidth=1.00];
+  \"Soil %N\" -> \"SIR\" [color=\"#A18D6B\", label=\" 3.23\", penwidth=1.46];
+  \"SIR\" -> \"Soil %C\" [color=\"#A18D6B\", label=\" 0.64\", penwidth=1.10];
+}
+"
+
+# Render the plot
+grViz(treatment_dot_script)
+
+## Plasticity SEM (Pretty) ----
+
+# Define custom colors for plasticity types
+plasticity_colors <- c(
+  "Reactors" = "#663366",    # Muted Purple
+  "Resistors" = "#D4AF37"    # Muted Gold
+)
+
+# Calculate penwidths (using the largest absolute effect of 10.50 as reference)
+# Function to scale penwidth between 1 and 7
+scale_penwidth <- function(value) {
+  abs_value <- abs(value)
+  min_width <- 1
+  max_width <- 7
+  max_effect <- 10.50
+  
+  scaled <- (abs_value / max_effect) * (max_width - min_width) + min_width
+  return(scaled)
+}
+
+plasticity_dot_script <- "digraph SEM_PathDiagram { 
+  rankdir=TB;
+  node [shape=rectangle, style=filled, fontname=\"Arial\"];
+  splines=true;
+  
+  # Define node ranks
+  { rank=source; \"Baseline goldenrod biomass\"; \"Reactors\"; \"Resistors\"; \"Baseline soil %C\" }
+  { rank=same; \"Goldenrod biomass\"; \"Grass biomass\"; \"Soil %N\" }
+  { rank=same; \"Plant diversity\"; \"SIR\" }
+  { rank=same; \"Grass %C\"; \"Goldenrod %N\"; \"Nitrogen mineralization\" }
+  { rank=sink; \"Soil %C\" }
+  
+  # Treatment nodes
+  \"Reactors\" [fillcolor=\"#663366\", fontcolor=\"white\"];
+  \"Resistors\" [fillcolor=\"#D4AF37\", fontcolor=\"black\"];
+  
+  # Baseline nodes
+  \"Baseline goldenrod biomass\" [fillcolor=\"#A8A8A8\"];
+  \"Baseline soil %C\" [fillcolor=\"#A8A8A8\"];
+  
+  # Response nodes
+  \"Grass biomass\" [fillcolor=\"#F0F0F0\"];
+  \"Goldenrod biomass\" [fillcolor=\"#F0F0F0\"];
+  \"Soil %N\" [fillcolor=\"#F0F0F0\"];
+  \"Soil %C\" [fillcolor=\"#F0F0F0\"];
+  \"Plant diversity\" [fillcolor=\"#F0F0F0\"];
+  \"Grass %C\" [fillcolor=\"#F0F0F0\"];
+  \"Goldenrod %N\" [fillcolor=\"#F0F0F0\"];
+  \"SIR\" [fillcolor=\"#F0F0F0\"];
+  \"Nitrogen mineralization\" [fillcolor=\"#F0F0F0\"];
+  
+  # Treatment effects - Reactors
+  \"Reactors\" -> \"Goldenrod biomass\" [color=\"#663366\", label=\" -7.36\", penwidth=5.91, style=\"dashed\"];
+  \"Reactors\" -> \"Grass biomass\" [color=\"#663366\", label=\" 6.16\", penwidth=5.12];
+  \"Reactors\" -> \"Soil %N\" [color=\"#663366\", label=\" -0.02\", penwidth=1.02, style=\"dashed\"];
+  \"Reactors\" -> \"Soil %C\" [color=\"#663366\", label=\" -0.16\", penwidth=1.11, style=\"dashed\"];
+  \"Reactors\" -> \"Nitrogen mineralization\" [color=\"#663366\", label=\" 1.32\", penwidth=1.88];
+  
+  # Treatment effects - Resistors
+  \"Resistors\" -> \"Goldenrod biomass\" [color=\"#D4AF37\", label=\" -4.68\", penwidth=4.13, style=\"dashed\"];
+  \"Resistors\" -> \"Grass biomass\" [color=\"#D4AF37\", label=\" 7.54\", penwidth=6.02];
+  \"Resistors\" -> \"Soil %N\" [color=\"#D4AF37\", label=\" -0.02\", penwidth=1.02, style=\"dashed\"];
+  \"Resistors\" -> \"Soil %C\" [color=\"#D4AF37\", label=\" -0.19\", penwidth=1.13, style=\"dashed\"];
+  \"Resistors\" -> \"Nitrogen mineralization\" [color=\"#D4AF37\", label=\" -3.07\", penwidth=2.95, style=\"dashed\"];
+  
+  # Baseline effects
+  \"Baseline goldenrod biomass\" -> \"Goldenrod biomass\" [color=\"black\", label=\" 10.50\", penwidth=7.00];
+  \"Baseline soil %C\" -> \"Grass %C\" [color=\"black\", label=\" 1.09\", penwidth=1.73];
+  
+  # Downstream effects
+  \"Goldenrod biomass\" -> \"Goldenrod %N\" [color=\"#9F8151\", label=\" 0.01\", penwidth=1.01];
+  \"Goldenrod biomass\" -> \"Plant diversity\" [color=\"#9F8151\", label=\" 0.00\", penwidth=1.00, style=\"dashed\"];
+  \"Grass biomass\" -> \"Plant diversity\" [color=\"#9F8151\", label=\" -0.01\", penwidth=1.01, style=\"dashed\"];
+  \"Grass biomass\" -> \"Grass %C\" [color=\"#9F8151\", label=\" 0.08\", penwidth=1.05];
+  \"Soil %N\" -> \"SIR\" [color=\"#9F8151\", label=\" 3.23\", penwidth=3.06];
+  \"SIR\" -> \"Soil %C\" [color=\"#9F8151\", label=\" 0.64\", penwidth=1.43];
+}
+"
+
+# Render the plot
+grViz(plasticity_dot_script)

@@ -77,9 +77,9 @@ biomass_plots <- biomass_plots %>%
     MISC_Biomass = (MISC / 100) * Biomass_g
   )
 
-# Nest data by Site and Year
+# Nest data by Site AND Year
 nested_data <- biomass_plots %>%
-  group_by(Site, Year) %>%
+  group_by(Site, Year) %>%  # grouping by both Site and Year
   nest()
 
 # Fit separate models and generate diagnostic plots for each group
@@ -94,20 +94,20 @@ model_fits <- nested_data %>%
     diagnostic_plot_SORU = map2(data, Site, ~ ggplot(.x, aes(x = SORU, y = SORU_Biomass)) +
                                   geom_point() +
                                   geom_smooth(method = "lm", se = FALSE) +
-                                  ggtitle(paste("Site:", .y, "SORU Check"))
+                                  ggtitle(paste("Site:", .y, "Year:", nested_data$Year[which(nested_data$Site == .y)], "SORU Check"))
                                 ),
     # Diagnostic plots for POPRC
     diagnostic_plot_POPRC = map2(data, Site, ~ ggplot(.x, aes(x = POPRC, y = POPRC_Biomass)) +
                                    geom_point() +
                                    geom_smooth(method = "lm", se = FALSE) +
-                                   ggtitle(paste("Site:", .y, "POPRC Check"))
+                                   ggtitle(paste("Site:", .y, "Year:", nested_data$Year[which(nested_data$Site == .y)], "POPRC Check"))
                                 ),
     
     # Diagnostic plots for MISC
     diagnostic_plot_MISC = map2(data, Site, ~ ggplot(.x, aes(x = MISC, y = MISC_Biomass)) +
                                   geom_point() +
                                   geom_smooth(method = "lm", se = FALSE) +
-                                  ggtitle(paste("Site:", .y, "MISC Check"))
+                                  ggtitle(paste("Site:", .y, "Year:", nested_data$Year[which(nested_data$Site == .y)], "MISC Check"))
                                 )
   )
 
@@ -178,7 +178,7 @@ calculate_diversity_indices <- function(data) {
     select(Cage.ID, PlantRichness, PlantDiversity)
 }
 
-# Load your data
+# Load data
 veg_2021 <- read.csv("Data/VegCommunity/Vegetation.cover.2021.csv")
 veg_2023 <- read.csv("Data/VegCommunity/Vegetation.cover.2023.csv")
 
