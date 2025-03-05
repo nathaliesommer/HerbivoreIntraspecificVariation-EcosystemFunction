@@ -54,4 +54,5 @@ rsconnect/
 
 # Ignore text files
 .txt
+/.txt/
 **/.txt
