@@ -101,7 +101,4 @@ To reproduce the analysis and figures:
 Results will be saved in the appropriate output directories as specified in each script.
 
 ## Contact
-For questions about the code or data, please open an issue in this repository or contact [contact information].
-
-## License
-[License information to be added]
+For questions about the code or data, please open an issue in this repository or contact Nathalie Sommer.
