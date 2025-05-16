@@ -20,7 +20,7 @@ vegmass2023 <- vegmass2023 %>% # unit conversion
   )
 
 vegmass2023 <- vegmass2023 %>%
-  select(-Biomass_Bag_kg, -Bag_kg, -Biomass_kg) 
+  dplyr::select(-Biomass_Bag_kg, -Bag_kg, -Biomass_kg) 
 
 biomass_plots <- bind_rows(vegmass2021, vegmass2023) # bind 2021 and 2023 data sets
 
@@ -32,7 +32,7 @@ diversitycomb <- bind_rows(diversity2023, diversity2021) # bind 2021 and 2023 da
 
 cage_diversity <- diversitycomb %>%
   filter(!(Population %in% c("HF", "SP"))) %>% # remove extraneous sites
-  select(-BARE) %>% # remove bare ground
+  dplyr::select(-BARE) %>% # remove bare ground
   rowwise() %>%
   mutate(Cover_Sum = sum(c_across(-c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate)))) %>% # sum plant cover 
   ungroup()
@@ -49,7 +49,7 @@ cage_diversity_long <- cage_diversity %>%
     names_to = "Species_ID",
     values_to = "Cover"
   ) %>% 
-  select(-Cover_Sum)
+  dplyr::select(-Cover_Sum)
 
 
 
@@ -175,7 +175,7 @@ calculate_diversity_indices <- function(data) {
       PlantDiversity = calculate_shannon_weiner(c_across(-c(Cage.ID, Year, Population, Transplant, Treatment, Site, Replicate)))
     ) %>%
     ungroup() %>%
-    select(Cage.ID, PlantRichness, PlantDiversity)
+    dplyr::select(Cage.ID, PlantRichness, PlantDiversity)
 }
 
 # Load data

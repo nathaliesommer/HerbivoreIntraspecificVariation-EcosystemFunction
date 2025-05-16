@@ -1,76 +1,50 @@
 # SEMs - Composite Variable
 
-# Treatment_PopType: Levels (Herbivore-Physiological; Herbivore-Behavioral; Vegetation)
-
 ### OVERVIEW: DAG ----
 
 library(ggdag)
 library(ggplot2)
 library(dplyr)
 
-# Define paths
-dag <- dagify(
-  SORU_biomass ~ Treatment_PopType,
-  SORU_biomass ~ SOIL_N_baseline,  # added from DST
-  SORU_biomass ~ POPRC_biomass_baseline,  # added from DST
-  SORU_biomass ~ SORU_N_baseline,  # added from DST
-  
-  POPRC_biomass ~ Treatment_PopType,
-  POPRC_biomass ~ SOM,  # added from DST
-  
+
+dag_separate <- dagify(
+  Reactor ~ Resistor,
+  Resistor ~ Reactor,
+  SORU_biomass ~ Reactor + Resistor + Vegetation,
+  POPRC_biomass ~ Reactor + Resistor + Vegetation,
+  POPRC_biomass ~ SOM,
   SORU_N ~ SORU_biomass,
-  SORU_N ~ PlantDiversity_baseline,  # added from DST
-  
   SORU_C ~ SORU_biomass,
-  SORU_C ~ PlantDiversity_baseline,  # added from DST
-  
   POPRC_C ~ POPRC_biomass,
-  POPRC_C ~ SORU_biomass,  # added from DST
-  POPRC_C ~ PlantDiversity_baseline,  # added from DST
-  POPRC_C ~ Nmin_baseline,  # added from DST
-  POPRC_C ~ POPRC_biomass_baseline,  # added from DST
-  POPRC_C ~ SOIL_C_baseline,  # added from DST
-  
+  POPRC_C ~ SORU_biomass,
   POPRC_N ~ POPRC_biomass,
-  POPRC_N ~ Nmin_baseline,  # added from DST
-  
   Litter_N ~ POPRC_N,
   Litter_N ~ SORU_N,
-  
-  Soil_C ~ Treatment_PopType,
+  Soil_C ~ Reactor + Resistor + Vegetation,
   Soil_C ~ SORU_biomass,
   Soil_C ~ SIR,
-  Soil_C ~ SOM,  # added from DST
-  Soil_C ~ SIR_baseline,  # added from DST
-  Soil_C ~ POPRC_C_baseline,  # added from DST
-  
-  Soil_N ~ Treatment_PopType,
-  Soil_N ~ LitterN,
-  
+  Soil_C ~ SOM,
+  Soil_N ~ Reactor + Resistor + Vegetation,
+  Soil_N ~ Litter_N,
   SIR ~ Soil_N,
   SIR ~ SOM,
-  
-  PlantDiversity ~ Soil_C,
-  PlantDiversity ~ SOM,
-  PlantDiversity ~ SORU_biomass,
-  PlantDiversity ~ POPRC_biomass,  # added from DST
-  PlantDiversity ~ SORU_N_baseline,  # added from DST
-  PlantDiversity ~ Nmin_baseline,  # added from DST
-  PlantDiversity ~ Litter_N_baseline,  # added from DST
-  
-  Nmin ~ Soil_N,
-  Nmin ~ SIR,
-  Nmin ~ Treatment_PopType,  # added from DST and hopper egestion theory
-  Nmin ~ PlantDiversity_baseline,  # added from DST
-  Nmin ~ POPRC_N_baseline  # added from DST
+  Plant_Diversity ~ Soil_C,
+  Plant_Diversity ~ SOM,
+  Plant_Diversity ~ SORU_biomass,
+  Plant_Diversity ~ POPRC_biomass,
+  N_min ~ Soil_N,
+  N_min ~ SIR,
+  N_min ~ Reactor + Resistor + Vegetation
 )
 
-ggdag(dag, text = FALSE) + 
-  geom_dag_node(data = . %>% filter(name == "Treatment_PopType"), color = "darkgreen", size = 28) +  
-  geom_dag_node(data = . %>% filter(!name == "Treatment_PopType"), size = 28, color = "darkgray") +  
+ggdag(dag_separate, text = FALSE) +
+  geom_dag_node(data = . %>% filter(name == "Reactor"), color = "#663366", size = 30) +
+  geom_dag_node(data = . %>% filter(name == "Resistor"), color = "#D4AF37", size = 30) +
+  geom_dag_node(data = . %>% filter(name == "Vegetation"), color = "#9BA48C", size = 30) +
+  geom_dag_node(data = . %>% filter(!name %in% c("Reactor", "Resistor", "Vegetation")), size = 28, color = "gray") +
   geom_dag_edges_link(arrow = arrow(length = unit(0.1, "inches")), edge_width = 0.8) +
-  geom_dag_text(size = 2.5) + 
-  theme_void() +  
+  geom_dag_text(size = 2.5) +
+  theme_void() +
   theme(legend.position = "none")
 
 ### Scripts to run, objects needed ----
@@ -162,7 +136,7 @@ final_data_year <- combined_data %>%
 
 
 final_data_year <- final_data_year %>% 
-  select(-Site.y, -Site.x, -average_SOM_2023)
+  dplyr::select(-Site.y, -Site.x, -average_SOM_2023)
 
 
 # Relevel for model interpretation
@@ -1612,7 +1586,7 @@ sem_model_original <- psem(
 summary_sem_model <- summary(sem_model_original)
 
 options(max.print = 10000)
-sink("SEM_Summary_Mid.txt") # saved as SEM_Summary_Initial before incorporating tests of directed separation 
+sink("SEM_Summary_Final.txt") # saved as SEM_Summary_Initial before incorporating tests of directed separation 
 print(summary_sem_model)
 sink()
 
@@ -1892,7 +1866,7 @@ grViz(basic_dot_script)
 #### Herbivory ----
 
 filtered_coefficients_herbivory <- filtered_coefficients %>%
-  select(c(Response, Predictor, Estimate)) %>%
+  dplyr::select(c(Response, Predictor, Estimate)) %>%
   filter(!is.na(Estimate)) %>%
   # First group by Response to handle the herbivore types averaging
   group_by(Response) %>%
@@ -2074,7 +2048,7 @@ grViz(dot_script)
 #### Plasticity ----
 
 filtered_coefficients_plasticity <- filtered_coefficients %>%
-  select(c(Response, Predictor, Estimate)) %>%
+  dplyr::select(c(Response, Predictor, Estimate)) %>%
   filter(!is.na(Estimate)) %>%
   group_by(Response) %>%
   # Subtract the estimate for vegetation from herbivore types

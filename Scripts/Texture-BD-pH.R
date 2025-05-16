@@ -84,17 +84,17 @@ library(paletteer)
 
 bd_ph_plot_data <- bind_rows(
   bulk_density_processed %>%
-    select(Site, SoilBulkDensity) %>%
+    dplyr::select(Site, SoilBulkDensity) %>%
     rename(value = SoilBulkDensity) %>%
     mutate(variable = "Bulk Density (g/cm³)"),
   texture_ph_processed %>%
-    select(Field, pH) %>%
+    dplyr::select(Field, pH) %>%
     rename(Site = Field, value = pH) %>%
     mutate(variable = "pH")
 )
 
 texture_plot_data <- texture_ph_processed %>%
-  select(Field, X.Sand, X.Silt, X.Clay) %>%
+  dplyr::select(Field, X.Sand, X.Silt, X.Clay) %>%
   rename(Site = Field) %>%
   pivot_longer(cols = c(X.Sand, X.Silt, X.Clay),
                names_to = "variable",

@@ -105,7 +105,7 @@ N_min_2021 <- N_min_2021 %>%
     `N-NH4 (mg per mL)` = `N.NH4..mg.per.mL.` - N_NH4_blank_avg
   ) %>%
   ungroup() %>%
-  select(-N_NO3_blank_avg, -N_NH4_blank_avg)
+  dplyr::select(-N_NO3_blank_avg, -N_NH4_blank_avg)
 
 # Remove blanks from 2023 and 2021 data 
 N_min_2023 <- N_min_2023 %>%
@@ -131,9 +131,9 @@ calculate_rate <- function(data, year, soil_depth = 10) {
     mutate(
       NH4_diff = `N.NH4..mg.per.mL.`[2] - `N.NH4..mg.per.mL.`[1],
       NO3_diff = `N.NO3..mg.per.mL.`[2] - `N.NO3..mg.per.mL.`[1],
-      # Calculate rates, scaled to per month and converted to mg/cm³
-      NH4_rate = (NH4_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg/cm³ per month
-      NO3_rate = (NO3_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg/cm³ per month
+      # Calculate rates, scaled to per month and converted to mg per cm^3
+      NH4_rate = (NH4_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg per cm^3 per month
+      NO3_rate = (NO3_diff * 1) * SoilBulkDensity_avg * soil_depth, # mg per cm^3 per month
       Overall_rate = NH4_rate + NO3_rate
     ) %>%
     ungroup()
@@ -151,14 +151,14 @@ N_min_2023 <- calculate_rate(N_min_2023, year = 2023) %>%
 # Drop columns that exist only in some data frames
 clean_data <- function(data, year_column_exists = TRUE) {
 data <- data %>%
-  select(-Day, -`N.NO3..mg.per.mL.`, -`N.NH4..mg.per.mL.`, 
+  dplyr::select(-Day, -`N.NO3..mg.per.mL.`, -`N.NH4..mg.per.mL.`, 
          -`N.NO3..mg.per.mL.`, -`N.NH4..mg.per.mL.`, 
          -SoilBulkDensity_avg, -NH4_diff, -NO3_diff)
 
 # Conditionally drop the Batch column if it exists
 if ("Batch" %in% colnames(data)) {
   data <- data %>%
-    select(-Batch)
+    dplyr::select(-Batch)
 }
 
 # Ensure distinct rows based on Sample.ID and Year if Year column exists
@@ -175,7 +175,7 @@ N_min_2023_clean <- clean_data(N_min_2023)
 
 # Merge the cleaned data frames
 N_min_full_data <- bind_rows(N_min_2021_clean, N_min_2023_clean) %>%
-  select(Sample.ID, Year, Transplant_Treatment, Trophic_Treatment, 
+  dplyr::select(Sample.ID, Year, Transplant_Treatment, Trophic_Treatment, 
          Population, Site, NH4_rate, NO3_rate, Overall_rate) %>%
   rename(
     `Ammonium rate` = NH4_rate,
@@ -228,12 +228,12 @@ average_rates <- function(data, new_row) {
 new_rows <- new_rows %>%
   rowwise() %>%
   mutate(
-    rates = list(average_rates(N_min_full_data, as.list(cur_data()))),
+    rates = list(average_rates(N_min_full_data, as.list(pick(everything())))),
     `Ammonium rate` = rates[[1]],
     `Nitrate rate` = rates[[2]],
     `Overall mineralization rate` = rates[[3]]
   ) %>%
-  select(-rates) %>%
+  dplyr::select(-rates) %>%
   ungroup()
 
 # Combine the new rows with the existing data

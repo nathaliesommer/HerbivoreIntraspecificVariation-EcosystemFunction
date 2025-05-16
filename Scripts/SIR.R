@@ -78,7 +78,7 @@ calculate_sir <- function(sir, gwc) {
       the.time = interpolated$the.time,
       the.slope = interpolated$the.slope
     ) %>%
-    select(-starts_with("std.value"), -std.start.time, -std.end.time)
+    dplyr::select(-starts_with("std.value"), -std.start.time, -std.end.time)
 
   sir_calc <- sir %>%
     mutate(
@@ -97,7 +97,7 @@ calculate_sir <- function(sir, gwc) {
       CO2C = molesCO2 * 12.011,
       CO2CperHour = CO2C / incubationTime
     ) %>%
-    select(
+    dplyr::select(
       irga.id, unique.id, replicate, soil.volume, actual.fresh.mass, 
       standard.co2, correctedStandard, the.time, the.slope, irga.integral, 
       incubationTime, CO2C, CO2CperHour
@@ -109,7 +109,7 @@ calculate_sir <- function(sir, gwc) {
       DryMass = actual.fresh.mass * (1 - moistureFraction),
       CO2CperHourperg = CO2CperHour / DryMass
     ) %>%
-    select(unique.id, replicate, CO2CperHourperg)
+    dplyr::select(unique.id, replicate, CO2CperHourperg)
 
   sir_calc_normalized %>%
     group_by(unique.id) %>%
@@ -156,7 +156,7 @@ sir_data_2023 <- process_sir_data(sir_files_2023, gwc_file_2023)
 
 # Combine with additional data for 2021
 prep_data_2021 <- read.csv("Data/SIR/2021_SIR/SIR Prep_2021.csv") %>%
-  select(Sample_ID, unique.id)
+  dplyr::select(Sample_ID, unique.id)
 
 c_2021 <- left_join(sir_data_2021, prep_data_2021, by = "unique.id") %>%
   mutate(Year = 2021) %>% 
@@ -165,7 +165,7 @@ c_2021 <- left_join(sir_data_2021, prep_data_2021, by = "unique.id") %>%
 
 # Combine with additional data for 2023
 prep_data_2023 <- read.csv("Data/SIR/2023_SIR/SIR Prep_2023.csv") %>%
-  select(Sample_ID, unique.id)
+  dplyr::select(Sample_ID, unique.id)
 
 c_2023 <- left_join(sir_data_2023, prep_data_2023, by = "unique.id") %>%
   mutate(Year = 2023) %>% 
