@@ -11,6 +11,7 @@ This repository contains all data, scripts, and documentation necessary to repro
 - [Project Overview](#project-overview)
 - [Data](#data)
 - [Scripts](#scripts)
+- [Supporting Information](#supportinginformation)
 - [Dependencies](#dependencies)
 - [Reproducibility](#reproducibility)
 
@@ -36,6 +37,9 @@ All data is contained within the `Data` folder in their raw, original form. The 
 ### Chemical Analysis
 - `Elements/`: Elemental analysis data
 
+## Supporting Information
+This folder contains the script for the accompanying (Shiny App)[https://nathaliesommer.shinyapps.io/herbivore-populations-structure-ecosystems/] and a script for a multigroup SEM analysis. 
+
 ## Scripts
 All analysis scripts are contained within the `Scripts` folder:
 
@@ -51,7 +55,7 @@ All analysis scripts are contained within the `Scripts` folder:
 ## Dependencies
 The analyses were conducted in R (version 4.4.1) with the following packages:
 
-### Data Manipulation and Analysis
+### Data Cleaning and Analysis
 - `tidyverse` (v1.3.0): Collection of data manipulation packages
 - `dplyr` (v1.1.4): Data manipulation
 - `tidyr` (v1.3.0): Data tidying
