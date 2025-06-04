@@ -11,7 +11,7 @@ This repository contains all data, scripts, and documentation necessary to repro
 - [Project Overview](#project-overview)
 - [Data](#data)
 - [Scripts](#scripts)
-- [Supporting Information](#supportinginformation)
+- [Supporting Information](#supporting-information)
 - [Dependencies](#dependencies)
 - [Reproducibility](#reproducibility)
 
@@ -38,7 +38,7 @@ All data is contained within the `Data` folder in their raw, original form. The 
 - `Elements/`: Elemental analysis data
 
 ## Supporting Information
-This folder contains the script for the accompanying (Shiny App)[https://nathaliesommer.shinyapps.io/herbivore-populations-structure-ecosystems/] and a script for a multigroup SEM analysis. 
+This folder contains the script for the accompanying [Shiny App](https://nathaliesommer.shinyapps.io/herbivore-populations-structure-ecosystems/) and a script for a multigroup SEM analysis. 
 
 ## Scripts
 All analysis scripts are contained within the `Scripts` folder:
