@@ -1,5 +1,5 @@
 # Herbivore population differences rival geographic and biophysical variation in structuring ecosystem function
-[Manuscript in review]
+*Global Change Biology* (2025)
 
 Authors: Nathalie R. Sommer, Annise M. Dobson, Matthew S. Baker, Geoffrey C. Trussell, and Oswald J. Schmitz
 
@@ -16,7 +16,8 @@ This repository contains all data, scripts, and documentation necessary to repro
 - [Reproducibility](#reproducibility)
 
 ## Project Overview
-We report on findings from a three-year geographically replicated experiment designed to quantify how differences in trait expressions of local populations of a dominant herbivore species mediate variation in ecosystem function across its geographic range in the New England region of the eastern USA. The species—Melanoplus femurrubrum—is a widespread grasshopper in which local populations differently express physiological and behavioral traits (Parsons & Joern 2014; Rosenblatt et al. 2019; Baker et al; Sommer et al.). We applied structural equation modeling (SEM) to quantify the relative contributions of among-population variation, and local climate and historical legacies as drivers of key ecosystem variables and functions, including plant biomass, soil nutrients, and nitrogen mineralization. We show how geographic variation in grasshopper impacts on old field ecosystem functioning varies with population origin (warm vs cool sites) which differ systematically in daily mean maximum temperature during the growing season (Baker et al.). Differences in old field ecosystem impacts between replicated warm and cool site populations can be attributed to differences in their expression of grasshopper population physiological and behavioral trait plasticity under environmental stressors. This study shows how mechanisms determining within-species variation in herbivory can manifest spatially to play an important role in shaping geographic variation in ecosystem function.
+Geographic variation in ecosystem function is often attributed to differences in climate and soil properties, with biophysical constraints assumed to dictate spatial patterns in nutrient cycling, carbon storage, and plant productivity. However, biotic interactions, particularly herbivory, also vary geographically and can generate feedbacks that influence ecosystem processes. Using a replicated three-year field experiment, we tested how population-level functional differences in a widespread arthropod herbivore mediate geographic variation in ecosystem function. Structural equation modeling revealed that herbivores exerted strong direct effects on plant biomass, soil carbon, and nitrogen mineralization, often surpassing the influence of historical conditions and geographic variation in climate. Moreover, functionally distinct herbivore populations had divergent effects on nutrient cycling and plant diversity, demonstrating that population-level differences introduce novel pathways of influence on ecosystem function. These findings challenge ecosystem models that prioritize abiotic constraints and highlight the need to incorporate consumer-driven feedbacks into ecological frameworks.
+
 
 ## Data
 All data is contained within the `Data` folder in their raw, original form. The data is organized into the following subdirectories:
